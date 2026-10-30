@@ -1,3 +1,5 @@
+import { ConvexClientProvider } from "@/components/ConvexClientProvider";
+import { RefCapture } from "@/components/RefCapture";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -35,7 +37,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ConvexClientProvider>
+          <RefCapture />
+          {children}
+        </ConvexClientProvider>
+      </body>
     </html>
   );
 }

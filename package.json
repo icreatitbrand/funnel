@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@convex-dev/auth": "^0.0.96",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",

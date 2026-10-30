@@ -24,3 +24,44 @@ body {
   color: var(--color-ink);
   font-family: var(--font-body);
 }
+
+/* Touch target: 44px minimum height (PRD 7.1) */
+.input-field {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid #cbd5e1;
+  padding: 0.625rem 0.75rem;
+  font-size: 1rem;
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+}
+.input-field:focus {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 1px;
+}
+
+.btn-primary {
+  min-height: 44px;
+  border-radius: 9999px;
+  background-color: var(--color-brand);
+  color: #ffffff;
+  font-weight: 600;
+  padding: 0 1.25rem;
+  border: none;
+  cursor: pointer;
+}
+.btn-primary:active {
+  background-color: var(--color-brand-dark);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 1px;
+}
+
