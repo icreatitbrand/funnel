@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+
+# next build output
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# env files (real values live only locally / in Vercel+Convex env vars)
+.env
+.env*.local
+convex/.env.local
+
+# convex generated client (created by `convex dev`)
+convex/_generated/
+
+# vercel
+.vercel/
+
+# misc
+.DS_Store
+Thumbs.db

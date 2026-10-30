@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+/*
+  Brand tokens - PLACEHOLDERS until Icreatit Brand assets arrive.
+  Replace hex values and the display/body fonts in one place here.
+  PRD 7.4: sufficient contrast on solid surfaces, no content directly on liquid.
+*/
+@theme {
+  --color-brand: #1e6f4f; /* brand green - TODO replace */
+  --color-brand-dark: #145238; /* TODO replace */
+  --color-brand-accent: #d9a441; /* TODO replace */
+  --color-ink: #101828;
+  --color-ink-soft: #475467;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f4f7f5;
+
+  /* TODO replace with real brand typefaces when assets arrive */
+  --font-display: system-ui, sans-serif;
+  --font-body: system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
