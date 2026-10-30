@@ -85,30 +85,45 @@ export const createPendingProfile = mutation({
       .withIndex("by_email", (q) => q.eq("email", email))
       .collect();
 
-    if (byEmail.some((u) => u.emailVerifiedAt !== undefined)) {
+    const verified = byEmail.find((u) => u.emailVerifiedAt !== undefined);
+    if (verified) {
       throw new ConvexError(
         "An account with this email already exists. Please sign in instead.",
       );
     }
-    if (byEmail.length > 0) {
-      throw new ConvexError(
-        "Your signup is already waiting for code confirmation. Please check your inbox.",
-      );
-    }
+    // An unverified (pending) signup from an earlier attempt is updated
+    // in place instead of rejected, so retries keep the visitor's latest
+    // details and never leave them stuck without a code.
+    const pendingProfile = byEmail.find(
+      (u) => u.emailVerifiedAt === undefined,
+    );
 
-    const byPhone = await ctx.db
+    const byPhone = (await ctx.db
       .query("users")
       .withIndex("by_phone", (q) => q.eq("phone", phone.e164))
-      .collect();
+      .collect()).filter((u) => u._id !== pendingProfile?._id);
     if (byPhone.length > 0) {
       throw new ConvexError(
         "This phone number is already in use. Please use a different number.",
       );
     }
 
-    // ---- Referral attribution ----
-    let referredBy: { _id: any; _creationTime: number } | undefined;
+    // ---- Referral attribution (immutable once set) ----
     const rawRefCode = (args.refCode ?? "").trim().toUpperCase();
+
+    if (pendingProfile) {
+      // Keep the original referral attribution; refresh editable fields.
+      await ctx.db.patch(pendingProfile._id, {
+        firstName: args.firstName.trim(),
+        surname: args.surname.trim(),
+        phone: phone.e164,
+        gender,
+        businessDescription: args.businessDescription.trim(),
+      });
+      return { inviteReferralCode: pendingProfile.referralCode };
+    }
+
+    let referredBy: { _id: any; _creationTime: number } | undefined;
     if (rawRefCode) {
       if (!REFERRAL_CODE_RE.test(rawRefCode)) {
         throw new ConvexError("Invalid referral code.");
