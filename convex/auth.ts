@@ -32,48 +32,75 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   },
   callbacks: {
     async createOrUpdateUser(ctx, args) {
-      const email = typeof args.profile.email === "string"
-        ? args.profile.email.toLowerCase().trim()
-        : undefined;
+      const db = typedDb(ctx);
+      const email =
+        typeof args.profile.email === "string"
+          ? args.profile.email.toLowerCase().trim()
+          : undefined;
 
-      // Returning user with an existing auth account: sign in as-is.
+      if (args.type !== "email" && args.type !== "verification") {
+        throw new ConvexError("Sign-in method not supported.");
+      }
+      if (!email) {
+        throw new ConvexError("Sign-in requires an email address.");
+      }
+
+      /*
+        Convex Auth calls this callback twice in the email OTP flow:
+        1. Code creation (type "email"): BEFORE the code is emailed.
+           - Returning users: existingUserId is set; sign in as-is.
+           - New signups: no account yet; attach it to our PENDING profile.
+        2. Verification (type "verification"): the code was correct.
+           - Mark the user's email as verified here.
+      */
       if (args.existingUserId !== null) {
+        if (args.type === "verification") {
+          const user = await db.get(args.existingUserId);
+          if (user && user.emailVerifiedAt === undefined) {
+            await db.patch(user._id, { emailVerifiedAt: Date.now() });
+            await db.insert("events", {
+              userId: user._id,
+              type: "email_verified",
+              createdAt: Date.now(),
+            });
+          }
+        }
         return args.existingUserId;
       }
 
-      // Email or phone verification of an existing account.
-      if (args.type === "verification" && email) {
-        const db = typedDb(ctx);
-        const candidates = await db
-          .query("users")
-          .withIndex("by_email", (q) => q.eq("email", email))
-          .collect();
+      // No auth account yet: map to the pending signup profile.
+      const candidates = await db
+        .query("users")
+        .withIndex("by_email", (q) => q.eq("email", email))
+        .collect();
 
-        const pending = candidates.find(
-          (u) => u.emailVerifiedAt === undefined,
-        );
-        if (pending) {
-          // Promote the pending signup to a verified account.
+      const pending = candidates.find(
+        (u) => u.emailVerifiedAt === undefined,
+      );
+      if (pending) {
+        if (args.type === "verification") {
+          // Successful code entry: promote the pending signup.
           await db.patch(pending._id, { emailVerifiedAt: Date.now() });
           await db.insert("events", {
             userId: pending._id,
             type: "email_verified",
             createdAt: Date.now(),
           });
-          return pending._id;
         }
+        return pending._id;
+      }
 
-        const verified = candidates.find((u) => u.emailVerifiedAt !== undefined);
-        if (verified) {
-          return verified._id;
-        }
-
+      if (args.type === "email") {
+        // This can only be reached if the auth gate (convex/authGate.ts)
+        // was bypassed; codes are never emailed to unknown addresses.
         throw new ConvexError(
           "There is no signup with this email address. Please sign up first.",
         );
       }
 
-      throw new ConvexError("Sign-in method not supported.");
+      throw new ConvexError(
+        "There is no signup with this email address. Please sign up first.",
+      );
     },
 
     async beforeSessionCreation(ctx, { userId }) {
