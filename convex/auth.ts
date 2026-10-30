@@ -3,6 +3,7 @@ import type { AnyDataModel, GenericMutationCtx } from "convex/server";
 import type { MutationCtx } from "./_generated/server";
 import { ConvexError } from "convex/values";
 import { BrevoEmailOTP } from "./BrevoEmailOTP";
+import { validateReferralsForUser } from "./referrals";
 
 /*
   The createOrUpdateUser callback receives a context typed against Convex
@@ -57,12 +58,18 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         if (args.type === "verification") {
           const user = await db.get(args.existingUserId);
           if (user && user.emailVerifiedAt === undefined) {
-            await db.patch(user._id, { emailVerifiedAt: Date.now() });
+            const now = Date.now();
+            await db.patch(user._id, { emailVerifiedAt: now });
             await db.insert("events", {
               userId: user._id,
               type: "email_verified",
-              createdAt: Date.now(),
+              createdAt: now,
             });
+            // Referrals attached to this signup become valid (PRD 6.4).
+            await validateReferralsForUser(
+              ctx as unknown as MutationCtx,
+              user._id,
+            );
           }
         }
         return args.existingUserId;
@@ -80,12 +87,18 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       if (pending) {
         if (args.type === "verification") {
           // Successful code entry: promote the pending signup.
-          await db.patch(pending._id, { emailVerifiedAt: Date.now() });
+          const now = Date.now();
+          await db.patch(pending._id, { emailVerifiedAt: now });
           await db.insert("events", {
             userId: pending._id,
             type: "email_verified",
-            createdAt: Date.now(),
+            createdAt: now,
           });
+          // Referrals attached to this signup become valid (PRD 6.4).
+          await validateReferralsForUser(
+            ctx as unknown as MutationCtx,
+            pending._id,
+          );
         }
         return pending._id;
       }

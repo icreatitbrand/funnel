@@ -65,3 +65,219 @@ button:focus-visible {
   outline-offset: 1px;
 }
 
+/* --------------------------- Dashboard (Phase 3) --------------------------- */
+
+.card {
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  background-color: var(--color-surface);
+}
+
+.card-title {
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.card.frosted {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(16, 24, 40, 0.04),
+    rgba(30, 111, 79, 0.08)
+  );
+  -webkit-backdrop-filter: saturate(140%) blur(2px);
+  backdrop-filter: saturate(140%) blur(2px);
+}
+
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+}
+.check-row + .check-row {
+  border-top: 1px solid #f1f5f9;
+}
+
+.check-dot {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  border-radius: 9999px;
+  border: 2px solid #cbd5e1;
+  position: relative;
+}
+.check-dot-done {
+  border-color: var(--color-brand);
+  background-color: var(--color-brand);
+}
+.check-dot-done::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 11px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  border-radius: 0.75rem;
+  background-color: var(--color-brand);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0 1rem;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.chip-btn:active {
+  background-color: var(--color-brand-dark);
+}
+.chip-btn-primary {
+  background-color: var(--color-brand-accent);
+  color: var(--color-ink);
+}
+
+.locked-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1rem;
+  border-radius: 0.75rem;
+  background-color: #e2e8f0;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.share-btn {
+  min-height: 44px;
+  border-radius: 0.75rem;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.share-btn:active {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+/* Liquid-fill progress vessel (PRD 7.2): transform/opacity only */
+.vessel {
+  position: relative;
+  height: 96px;
+  border-radius: 1.25rem;
+  border: 1px solid #cbd5e1;
+  overflow: hidden;
+  background: var(--color-surface-alt);
+}
+.vessel-fill {
+  position: absolute;
+  inset: auto 0 0 0;
+  background: linear-gradient(180deg, #2f8f68, var(--color-brand));
+  transition: height 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.vessel-wave {
+  position: absolute;
+  inset: -14px 0 auto 0;
+  height: 14px;
+  background: radial-gradient(
+    circle at 25% 100%,
+    rgba(255, 255, 255, 0.55) 4px,
+    transparent 4.5px
+  ),
+  radial-gradient(circle at 65% 100%, rgba(255, 255, 255, 0.4) 4px, transparent 4.5px);
+  background-size: 56px 14px;
+  animation: wave-bob 3.2s linear infinite;
+  will-change: transform;
+}
+@keyframes wave-bob {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(56px);
+  }
+}
+
+.toast {
+  position: fixed;
+  inset-inline: 1rem;
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  z-index: 30;
+  border-radius: 0.75rem;
+  background: var(--color-ink);
+  color: #fff;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  box-shadow: 0 10px 30px rgba(16, 24, 40, 0.25);
+  cursor: default;
+  animation: toast-in 260ms ease-out;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.celebrate {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background: rgba(16, 24, 40, 0.4);
+  animation: toast-in 200ms ease-out;
+}
+.celebrate-card {
+  border-radius: 1rem;
+  background: #fff;
+  padding: 2rem 2.5rem;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(16, 24, 40, 0.35);
+  animation: burst 500ms cubic-bezier(0.22, 1.4, 0.36, 1);
+}
+@keyframes burst {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vessel-fill,
+  .vessel-wave,
+  .toast,
+  .celebrate,
+  .celebrate-card {
+    animation: none;
+  }
+}
+
