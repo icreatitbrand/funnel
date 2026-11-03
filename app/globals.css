@@ -281,3 +281,114 @@ button:focus-visible {
   }
 }
 
+/* ---------------------- Paid tier + video course (v1.3) --------------------- */
+
+.video-module {
+  margin-top: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+.video-module:first-of-type {
+  margin-top: 0;
+}
+
+.locked-video-placeholder {
+  display: grid;
+  place-items: center;
+  min-height: 12rem;
+  text-align: center;
+  gap: 0.25rem;
+  padding: 1rem;
+  background: linear-gradient(
+    135deg,
+    rgba(16, 24, 40, 0.05),
+    rgba(30, 111, 79, 0.12)
+  );
+}
+
+.pay-cta {
+  display: inline-block;
+  width: 100%;
+  min-height: 52px;
+  border: none;
+  border-radius: 0.9rem;
+  font-weight: 800;
+  font-size: 1rem;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(120deg, #145238, #1e6f4f 45%, #2f8f68 75%, #1e6f4f);
+  background-size: 220% 100%;
+  animation: pay-sheen 4s ease-in-out infinite;
+  box-shadow: 0 8px 24px rgba(30, 111, 79, 0.35);
+}
+@keyframes pay-sheen {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.paid-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+}
+.paid-item-locked {
+  background: var(--color-surface-alt);
+}
+
+.pay-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(16, 24, 40, 0.55);
+}
+.pay-modal {
+  width: 100%;
+  max-width: 26rem;
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  animation: toast-in 200ms ease-out;
+}
+.pay-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  width: 100%;
+  min-height: 64px;
+  text-align: left;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: #fff;
+  cursor: pointer;
+}
+.pay-option:disabled {
+  opacity: 0.6;
+}
+.pay-option-sub {
+  font-size: 0.75rem;
+  color: var(--color-brand);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pay-cta,
+  .pay-modal {
+    animation: none;
+  }
+}
+

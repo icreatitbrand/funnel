@@ -14,8 +14,14 @@ export const DEFAULT_SETTINGS = {
   // Approved copy (PRD 6.3). Placeholders: {firstName}, {surname}, {email}.
   whatsappMessageTemplate:
     "Hello Sir, my name is {firstName} {surname}, I'm ready for the free course video modules.",
-  telegramInviteMode: "static", // "bot" | "static" (Phase 5 wires the bot)
-  telegramGroupLink: "",
+  // Dashboard video modules (PRD 6.5). Empty until YouTube URLs arrive.
+  video1YoutubeUrl: "",
+  video2YoutubeUrl: "",
+  // Paid tiers (PRD 6.7): revealed only after payment verification.
+  paidWhatsappGroupLink: "",
+  paidTelegramGroupLink: "", // bot single-use invites land in Phase 5
+  pdfPriceNaira: 7500,
+  bundlePriceNaira: 20500,
   maxCeoCallsPerWeek: 15,
   launchDate: 0,
 } satisfies Record<string, string | number>;

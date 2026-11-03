@@ -3,7 +3,7 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 /*
-  Data model per PRD Section 8 (v1.2).
+  Data model per PRD Section 8 (v1.3).
 
   - `authTables` adds the Convex Auth internals (authSessions, authAccounts,
     authRefreshTokens, authVerificationCodes, authVerifiers, authRateLimits).
@@ -14,6 +14,10 @@ import { v } from "convex/values";
     (duplicate-phone/self-referral checks, referral lookups).
   - `otpSends` is internal bookkeeping for the auth gate rate limiter
     (addition to the PRD Section 8 list; documented in ops notes).
+  - v1.3: referral referrals gate the VIDEO course; the PDF book, WhatsApp
+    group and Telegram group are gated by SERVER-VERIFIED Paystack payments
+    (`payments` table). Paid unlocks are never affected by referral
+    invalidation.
 */
 
 const users = defineTable({
@@ -39,10 +43,15 @@ const users = defineTable({
   emailVerifiedAt: v.optional(v.number()),
   whatsappClickedAt: v.optional(v.number()),
   validReferralCount: v.number(), // denormalized; recalculated on change
-  telegramUnlockedAt: v.optional(v.number()),
-  telegramJoinedAt: v.optional(v.number()), // via Telegram bot webhook
-  pdfUnlockedAt: v.optional(v.number()),
-  ceoCallUnlockedAt: v.optional(v.number()),
+  videoUnlockedAt: v.optional(v.number()), // WhatsApp click + 1 valid referral
+  video1StartedAt: v.optional(v.number()), // analytics only
+  video2EngagedAt: v.optional(v.number()), // ~50% playback, once (PRD 6.5)
+  pdfUnlockedAt: v.optional(v.number()), // free course guide at 3 referrals
+  paidPdfUnlockedAt: v.optional(v.number()), // payment verified (plan pdf/bundle)
+  whatsappGroupUnlockedAt: v.optional(v.number()), // bundle payment verified
+  telegramGroupUnlockedAt: v.optional(v.number()), // bundle payment verified
+  ceoCallUnlockedAt: v.optional(v.number()), // 10 valid referrals
+  avatarId: v.optional(v.string()), // preset id; see AVATAR_PRESETS (client)
   consentAt: v.number(), // NDPA consent timestamp
   role: v.union(v.literal("user"), v.literal("admin")), // ops/scripts only; no admin UI in v1
   flagged: v.boolean(),
@@ -73,10 +82,12 @@ export default defineSchema({
     .index("by_referredUser", ["referredUserId"]),
 
   /*
-    Funnel analytics events. `type` uses the PRD vocabulary:
-    signup, email_verified, whatsapp_click, telegram_unlock, telegram_joined,
-    pdf_download, ceo_booking_click, ceo_call_booked, milestone_1,
-    milestone_3, milestone_10.
+    Funnel analytics events. `type` uses the PRD vocabulary (v1.3):
+    signup, email_verified, whatsapp_click, video_unlock, video1_started,
+    video2_engaged, guide_download, paid_pdf_download,
+    whatsapp_group_joined, telegram_join_clicked, payment_initialized,
+    payment_confirmed, ceo_booking_click, ceo_call_booked, milestone_1,
+    milestone_3, milestone_10, referral_invalidated.
   */
   events: defineTable({
     userId: v.id("users"),
@@ -101,17 +112,46 @@ export default defineSchema({
 
   /*
     Runtime-editable configuration so numbers/links change without code deploys.
-    Key-value form. Expected keys (PRD 8):
-      whatsappNumber          string, e.g. "2348012345678"
-      whatsappMessageTemplate string, may contain placeholders like {firstName}
-      telegramInviteMode      "bot" | "static"
-      maxCeoCallsPerWeek      number
-      launchDate              number (timestamp)
+    Key-value form. Expected keys (PRD 8, v1.3):
+      ceoWhatsappNumber        string, e.g. "2347043420165"
+      whatsappMessageTemplate  string, placeholders {firstName} {surname} {email}
+      video1YoutubeUrl         string (empty = embed unavailable)
+      video2YoutubeUrl         string (empty = embed unavailable)
+      paidWhatsappGroupLink    string (revealed after bundle payment)
+      paidTelegramGroupLink    string (revealed after bundle payment; bot in Phase 5)
+      pdfPriceNaira            number (7500)
+      bundlePriceNaira         number (20500)
+      maxCeoCallsPerWeek       number
+      launchDate               number (timestamp)
   */
   settings: defineTable({
     key: v.string(),
     value: v.any(),
   }).index("by_key", ["key"]),
+
+  /*
+    Paystack payments (PRD 6.7). Unlock timestamps on `users` are ONLY set by
+    payment confirmation (webhook after signature+amount verification, or the
+    ops-confirm tool for edge cases). Nothing unlocks client-side.
+  */
+  payments: defineTable({
+    userId: v.id("users"),
+    plan: v.union(v.literal("pdf"), v.literal("bundle")),
+    amountNaira: v.number(), // recorded at initialization for audit
+    provider: v.literal("paystack"),
+    reference: v.string(), // unique
+    status: v.union(
+      v.literal("initialized"),
+      v.literal("confirmed"),
+      v.literal("failed"),
+    ),
+    initializedAt: v.number(),
+    confirmedAt: v.optional(v.number()),
+    meta: v.optional(v.any()), // Paystack payload summary for reconciliation
+  })
+    .index("by_user", ["userId"])
+    .index("by_reference", ["reference"])
+    .index("by_status", ["status"]),
 
   // Internal: OTP send history for the auth-gate rate limiter (convex/authGate.ts)
   otpSends: defineTable({

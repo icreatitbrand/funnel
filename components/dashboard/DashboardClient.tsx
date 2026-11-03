@@ -1,21 +1,23 @@
 "use client";
 
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "../../convex/_generated/api";
 import { bareLinkText, fillShareMessage, SHARE_MESSAGES } from "@/lib/share";
+import { useYouTubeProgress, youtubeIdFromUrl } from "./useYouTubeProgress";
 
 /*
-  One-page dashboard (PRD 6.2).
+  One-page dashboard (PRD 6.2, v1.3).
 
-  Blocks: welcome header + level badge, unlock checklist (WhatsApp, refer 1,
-  Telegram), referral link card with share buttons + ready-made messages,
-  liquid progress tracker, rewards (PDF, CEO call), my referrals list,
-  offers strip, footer. Real-time via reactive queries; live toast when a
-  referral joins; milestone celebration on level-ups.
+  Blocks: welcome header (avatar + level), unlock checklist (WhatsApp to the
+  CEO, refer 1, course), referral link card, video course modules with
+  IFrame-API engagement tracking, free guide reward card (under the videos),
+  liquid progress tracker, payment section (only after module 2 is engaged)
+  with the gated PDF book / WhatsApp group / Telegram group items, CEO call
+  reward, masked referrals list, footer.
 
   The shapes below mirror convex/dashboard.ts getDashboardData (kept local so
   the client bundle never imports backend code).
@@ -30,34 +32,67 @@ interface DashboardReferral {
 interface DashboardData {
   firstName: string;
   surname: string;
+  email: string;
+  avatarId: string;
   referralCode: string;
   level: "Explorer" | "Connector" | "Builder" | "Scaler";
   validReferralCount: number;
   whatsappClicked: boolean;
-  telegramUnlocked: boolean;
+  videosUnlocked: boolean;
+  video1Started: boolean;
+  video2Engaged: boolean;
   pdfUnlocked: boolean;
+  paidPdfUnlocked: boolean;
+  whatsappGroupUnlocked: boolean;
+  telegramGroupUnlocked: boolean;
   ceoCallUnlocked: boolean;
-  email: string;
   ceoWhatsappNumber: string;
   whatsappMessageTemplate: string;
-  telegramGroupLink: string;
+  video1YoutubeUrl: string;
+  video2YoutubeUrl: string;
+  paidWhatsappGroupLink: string;
+  paidTelegramGroupLink: string;
+  pdfPriceNaira: number;
+  bundlePriceNaira: number;
   referrals: DashboardReferral[];
   nextGoal: { text: string; referralsRemaining: number };
 }
 
 type Level = DashboardData["level"];
 
+const AVATAR_COLORS: Record<string, string> = {
+  auto: "#1e6f4f",
+  sage: "#2f8f68",
+  slate: "#475569",
+  amber: "#d9a441",
+  rose: "#c4506b",
+  sky: "#2f7ea8",
+  violet: "#6d59b5",
+};
+
+const PAID_ITEM_EXPLANATIONS = {
+  pdf: "The complete PDF book with every lesson and grant checklist from the course.",
+  whatsapp: "The private WhatsApp group where the CEO shares live tips and offers first.",
+  telegram: "The private Telegram community with recordings, briefs and peer support.",
+} as const;
+
 export function DashboardClient() {
   const { signOut } = useAuthActions();
   const router = useRouter();
   const data = useQuery(api.dashboard.getDashboardData) as DashboardData | null | undefined;
   const recordWhatsappClick = useMutation(api.dashboard.recordWhatsappClick);
-  const recordTelegramJoinClick = useMutation(api.dashboard.recordTelegramJoinClick);
+  const recordVideo1Started = useMutation(api.dashboard.recordVideo1Started);
+  const recordVideo2Engaged = useMutation(api.dashboard.recordVideo2Engaged);
+  const setAvatar = useMutation(api.dashboard.setAvatar);
+  const initializePayment = useAction(api.payments.initializePayment);
 
   const [toast, setToast] = useState<string | null>(null);
+  const [payModalOpen, setPayModalOpen] = useState(false);
   const [celebration, setCelebration] = useState<Level | null>(null);
   const prevLevel = useRef<Level | null>(null);
   const prevValidCount = useRef<number | null>(null);
+
+  const showToast = useCallback((message: string) => setToast(message), []);
 
   // Live toast when a friend joins through the user's link (PRD 6.2).
   useEffect(() => {
@@ -71,7 +106,7 @@ export function DashboardClient() {
     prevValidCount.current = validCount;
   }, [data]);
 
-  // Milestone celebration (PRD 7.3): level badge reveal + optional haptics.
+  // Milestone celebration (PRD 7.3): level reveal + optional haptics.
   useEffect(() => {
     if (!data) return;
     if (prevLevel.current && data.level !== prevLevel.current) {
@@ -127,21 +162,9 @@ export function DashboardClient() {
     .replace("{email}", data.email);
   const waMe = `https://wa.me/${data.ceoWhatsappNumber}?text=${encodeURIComponent(whatsappText)}`;
 
-  function clickWhatsapp() {
+  const clickWhatsapp = () => {
     void recordWhatsappClick();
     window.open(waMe, "_blank", "noopener");
-  }
-
-  const joinTelegram = () => {
-    void recordTelegramJoinClick()
-      .then(() => {
-        if (data.telegramGroupLink) {
-          window.open(data.telegramGroupLink, "_blank", "noopener");
-        } else {
-          setToast("The group link arrives shortly - you are all set.");
-        }
-      })
-      .catch(() => setToast("Telegram access is not unlocked yet."));
   };
 
   const share = async () => {
@@ -166,41 +189,77 @@ export function DashboardClient() {
     }
   };
 
+  const startPayment = async (plan: "pdf" | "bundle") => {
+    try {
+      const result = await initializePayment({ plan });
+      window.open(result.authorizationUrl, "_blank", "noopener");
+      setPayModalOpen(false);
+      setToast("Complete the secure payment in the opened tab.");
+    } catch (e) {
+      setToast(
+        e instanceof Error && e.message
+          ? e.message.replace("Uncaught Error momentarily... ", "")
+          : "Could not start payment.",
+      );
+    }
+  };
+
+  const joinPaidGroup = (link: string, unlocked: boolean, kind: string) => {
+    if (!unlocked) {
+      setToast("Unlocks after your payment is confirmed.");
+      return;
+    }
+    if (!link) {
+      setToast(`The ${kind} group link is being prepared - check back shortly.`);
+      return;
+    }
+    window.open(link, "_blank", "noopener");
+  };
+
   const primaryAction = !data.whatsappClicked
     ? { label: "Send WhatsApp message", onClick: clickWhatsapp }
-    : !data.telegramUnlocked
+    : !data.videosUnlocked
       ? { label: "Share your link", onClick: () => void share() }
-      : data.telegramGroupLink
-        ? { label: "Join the Telegram Group", onClick: joinTelegram }
-        : { label: "Telegram access ready", onClick: () => {} };
+      : !data.video2Engaged
+        ? { label: "Watch module 2 to unlock more", onClick: () => scrollToSection("module-2") }
+        : { label: "Unlock the paid packages", onClick: () => setPayModalOpen(true) };
 
-  const nextReward = data.validReferralCount < 3 ? { goal: 3, label: "PDF guide" } : { goal: 10, label: "CEO call" };
+  function scrollToSection(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
-  return (
-    <div className="mx-auto flex min-h-dvh max-w-xl flex-col px-4 pb-28 pt-8">
-      <WelcomeHeader data={data} />
+  return (    <div className="mx-auto flex min-h-dvh max-w-xl flex-col px-4 pb-28 pt-8">
+      <WelcomeHeader data={data} onSetAvatar={(id) => void setAvatar({ avatarId: id })} />
 
-      <UnlockChecklist
+      <UnlockChecklist data={data} clickWhatsapp={clickWhatsapp} />
+
+      <ReferralCard
         data={data}
-        waMe={waMe}
-        whatsappText={whatsappText}
-        clickWhatsapp={clickWhatsapp}
-        joinTelegram={joinTelegram}
+        referralLink={referralLink}
+        onToast={setToast}
+        name={data.firstName}
       />
 
-      <ReferralCard data={data} referralLink={referralLink} onToast={setToast} name={data.firstName} />
+      <VideoCourseSection data={data} onStarted={() => void recordVideo1Started()} onEngaged={() => void recordVideo2Engaged()} />
+
+      <FreeGuideCard data={data} onToast={setToast} />
 
       <ProgressTracker data={data} />
 
-      <Rewards
-        data={data}
-        nextReward={nextReward}
-        onToast={setToast}
-      />
+      {data.video2Engaged && (
+        <PaymentSection
+          data={data}
+          onPauseModal={() => setPayModalOpen(true)}
+          payModalOpen={payModalOpen}
+          setPayModalOpen={setPayModalOpen}
+          startPayment={startPayment}
+          joinPaidGroup={joinPaidGroup}
+        />
+      )}
+
+      <Rewards data={data} onToast={setToast} />
 
       <ReferralsList referrals={data.referrals} />
-
-      <OffersStrip onToast={setToast} telegramUnlocked={data.telegramUnlocked} />
 
       <footer className="mt-10 flex flex-col items-center gap-3 border-t border-slate-200 pt-6 text-sm">
         <p className="text-ink-soft">
@@ -246,7 +305,7 @@ export function DashboardClient() {
       {celebration && (
         <div className="celebrate" role="presentation">
           <div className="celebrate-card">
-            <span className="text-4xl">{celebration}</span>
+            <span className="text-3xl font-extrabold text-brand">{celebration}</span>
             <p className="mt-2 font-semibold">Level up: {celebration}</p>
           </div>
         </div>
@@ -257,33 +316,67 @@ export function DashboardClient() {
 
 /* ---------------------------------- blocks --------------------------------- */
 
-function WelcomeHeader({ data }: { data: DashboardData }) {
+function initialsOf(first: string, surname: string): string {
+  const a = first.trim()[0]?.toUpperCase() ?? "A";
+  const b = surname.trim()[0]?.toUpperCase() ?? "";
+  return `${a}${b}`;
+}
+
+function WelcomeHeader(props: {
+  data: DashboardData;
+  onSetAvatar: (id: string) => void;
+}) {
+  const { data } = props;
+  const color = AVATAR_COLORS[data.avatarId] ?? AVATAR_COLORS.auto;
   return (
-    <header className="mb-6 flex flex-col gap-1">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">
-        {data.level}
-      </p>
-      <h1 className="text-2xl font-bold">Welcome, {data.firstName}</h1>
-      <p className="text-sm text-ink-soft">{data.nextGoal.text}</p>
+    <header className="mb-6">
+      <div className="mb-4 flex items-center gap-3">
+        <span
+          aria-label="Your avatar"
+          className="grid h-12 w-12 place-items-center rounded-full text-sm font-bold text-white"
+          style={{ backgroundColor: color }}
+        >
+          {initialsOf(data.firstName, data.surname)}
+        </span>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">
+            {data.level}
+          </p>
+          <h1 className="text-2xl font-bold">Welcome, {data.firstName}</h1>
+        </div>
+      </div>
+      <p className="mb-2 text-sm text-ink-soft">{data.nextGoal.text}</p>
+      <div className="flex items-center gap-2" aria-label="Choose your avatar colour">
+        <span className="text-xs text-ink-soft">Avatar colour:</span>
+        {(["auto", "sage", "slate", "amber", "rose", "sky", "violet"] as const).map((id) => (
+          <button
+            key={id}
+            type="button"
+            aria-label={`Set avatar colour ${id}`}
+            className={`h-6 w-6 rounded-full border-2 ${
+              data.avatarId === id ? "border-ink" : "border-transparent"
+            }`}
+            style={{ backgroundColor: AVATAR_COLORS[id] }}
+            onClick={props.onSetAvatar.bind(null, id)}
+          />
+        ))}
+      </div>
     </header>
   );
 }
 
 function UnlockChecklist(props: {
   data: DashboardData;
-  waMe: string;
-  whatsappText: string;
   clickWhatsapp: () => void;
-  joinTelegram: () => void;
 }) {
   const { data } = props;
   return (
     <section className="card" aria-label="Unlock checklist">
-      <h2 className="card-title">Unlock the Telegram group</h2>
+      <h2 className="card-title">Unlock the video course</h2>
       <CheckItem
         done={data.whatsappClicked}
-        title="Send us a WhatsApp message"
-        description="Open the pre-filled message and hit send."
+        title="Send the CEO a WhatsApp message"
+        description="Open the pre-filled message and hit send. It saves his number."
         action={
           <button type="button" onClick={props.clickWhatsapp} className="chip-btn">
             {data.whatsappClicked ? "Sent" : "Send WhatsApp message"}
@@ -296,20 +389,18 @@ function UnlockChecklist(props: {
         description={`Progress: ${Math.min(data.validReferralCount, 1)}/1 valid referral. Your link is in the card below.`}
       />
       <CheckItem
-        done={data.telegramUnlocked}
-        title="Join the Telegram group"
+        done={data.videosUnlocked}
+        title="Watch the video modules"
         description={
-          data.telegramUnlocked
-            ? data.telegramGroupLink
-              ? "Unlocked. Tap join to enter."
-              : "Unlocked. The invite link arrives shortly."
+          data.videosUnlocked
+            ? "Unlocked. The two modules are below (about 20 minutes)."
             : "Locked until the two steps above are complete."
         }
         action={
-          data.telegramUnlocked ? (
-            <button type="button" onClick={props.joinTelegram} className="chip-btn chip-btn-primary">
-              Join the Telegram Group
-            </button>
+          data.videosUnlocked ? (
+            <span className="locked-chip" style={{ background: "var(--color-brand)", color: "#fff" }}>
+              Unlocked
+            </span>
           ) : (
             <span className="locked-chip">Locked</span>
           )
@@ -422,6 +513,140 @@ function ShareBtn(props: { label: string; onClick: () => void }) {
   );
 }
 
+function VideoModule(props: {
+  id: string;
+  index: number;
+  title: string;
+  youtubeUrl: string;
+  unlocked: boolean;
+  onStarted: () => void;
+  onEngaged: () => void;
+  isSecond: boolean;
+  engaged: boolean;
+}) {
+  const videoId = youtubeIdFromUrl(props.youtubeUrl);
+  useYouTubeProgress(
+    `yt-${props.id}`,
+    props.unlocked && videoId ? videoId : null,
+    props.onStarted,
+    props.isSecond ? props.onEngaged : () => {},
+  );
+
+  return (
+    <div
+      id={props.id}
+      className={`video-module ${props.unlocked ? "" : "frosted"}`}
+    >
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="font-semibold">Module {props.index}: {props.title}</h3>
+        {props.isSecond && props.engaged ? (
+          <span className="rounded-full bg-brand px-2 py-0.5 text-xs text-white">Watched</span>
+        ) : null}
+      </div>
+      {props.unlocked ? (
+        videoId ? (
+          <div id={`yt-${props.id}`} />
+        ) : (
+          <p className="text-sm text-ink-soft">
+            The video link will be published shortly. You are all set.
+          </p>
+        )
+      ) : (
+        <div className="locked-video-placeholder">
+          <p className="font-semibold">Locked</p>
+          <p className="text-sm text-ink-soft">
+            Complete the two unlock steps above to watch.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function VideoCourseSection(props: {
+  data: DashboardData;
+  onStarted: () => void;
+  onEngaged: () => void;
+}) {
+  const { data, onStarted, onEngaged } = props;
+  return (
+    <section className="card" aria-label="Video course">
+      <h2 className="card-title">The free course (about 20 minutes)</h2>
+      {data.videosUnlocked ? (
+        <>
+          <VideoModule
+            id="module-1"
+            index={1}
+            title="How to win business grants"
+            youtubeUrl={data.video1YoutubeUrl}
+            unlocked
+            onStarted={onStarted}
+            onEngaged={onEngaged}
+            isSecond={false}
+            engaged={false}
+          />
+          <VideoModule
+            id="module-2"
+            index={2}
+            title="Using AI for your business and marketing it"
+            youtubeUrl={data.video2YoutubeUrl}
+            unlocked
+            onStarted={() => {}}
+            onEngaged={onEngaged}
+            isSecond
+            engaged={data.video2Engaged}
+          />
+          {!data.video2Engaged && (
+            <p className="text-sm text-ink-soft">
+              Watch module 2 to the halfway point to open the next section.
+            </p>
+          )}
+        </>
+      ) : (
+        <div className="locked-video-placeholder">
+          <p className="font-semibold">Video course locked</p>
+          <p className="text-sm text-ink-soft">
+            Send the CEO's WhatsApp message and refer 1 friend to unlock both
+            modules.
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function FreeGuideCard(props: {
+  data: DashboardData;
+  onToast: (t: string) => void;
+}) {
+  const { data } = props;
+  const remaining = Math.max(0, 3 - data.validReferralCount);
+  return (
+    <section className="card" aria-label="Free course guide">
+      <h2 className="card-title">Free course guide</h2>
+      {data.pdfUnlocked ? (
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm text-ink-soft">
+            Your companion guide for the video modules is ready.
+          </p>
+          <button
+            type="button"
+            className="chip-btn chip-btn-primary"
+            onClick={() => props.onToast("Guide downloads arrive with the next build phase.")}
+          >
+            Download
+          </button>
+        </div>
+      ) : (
+        <p className="text-sm text-ink-soft">
+          {remaining} more referral{remaining === 1 ? "" : "s"} to unlock the free
+          course guide PDF. Locked.
+        </p>
+      )}
+    </section>
+  );
+}
+
 function ProgressTracker({ data }: { data: DashboardData }) {
   const pct = Math.min(100, (data.validReferralCount / 10) * 100);
   const stage = data.validReferralCount >= 10 ? "Scaler unlocked" : `${10 - data.validReferralCount} to go`;
@@ -435,8 +660,8 @@ function ProgressTracker({ data }: { data: DashboardData }) {
       </div>
       <ol className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
         {[
-          { n: 1, label: "Telegram" },
-          { n: 3, label: "PDF guide" },
+          { n: 1, label: "Video modules" },
+          { n: 3, label: "Free guide" },
           { n: 10, label: "CEO call" },
         ].map((m) => (
           <li key={m.n} className={`rounded-lg border p-2 ${data.validReferralCount >= m.n ? "border-brand text-brand font-semibold" : "border-slate-200 text-ink-soft"}`}>
@@ -448,65 +673,190 @@ function ProgressTracker({ data }: { data: DashboardData }) {
   );
 }
 
-function Rewards(props: { data: DashboardData; nextReward: { goal: number; label: string }; onToast: (t: string) => void }) {
+function PaymentSection(props: {
+  data: DashboardData;
+  payModalOpen: boolean;
+  setPayModalOpen: (open: boolean) => void;
+  onPauseModal: () => void;
+  startPayment: (plan: "pdf" | "bundle") => Promise<void>;
+  joinPaidGroup: (link: string, unlocked: boolean, kind: string) => void;
+}) {
   const { data } = props;
   return (
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2" aria-label="Rewards">
-      <RewardCard
-        title="Pre-training PDF guide"
-        unlocked={data.pdfUnlocked}
-        lockedText={
-          data.pdfUnlocked
-            ? ""
-            : data.validReferralCount < 3
-              ? `${3 - data.validReferralCount} more referral${3 - data.validReferralCount === 1 ? "" : "s"} to unlock.`
-              : "Unlocks at 3 valid referrals."
-        }
-        unlockedAction={
-          <button
-            type="button"
-            className="chip-btn chip-btn-primary"
-            onClick={() => props.onToast("Your PDF guide will be emailed to you - delivery is landing in the next build phase.")}
-          >
-            Download
-          </button>
-        }
-      />
-      <RewardCard
-        title="One-on-one CEO strategy call"
-        unlocked={data.ceoCallUnlocked}
-        lockedText={`Unlocks at 10 valid referrals (${10 - data.validReferralCount} to go).`}
-        unlockedAction={
-          <button
-            type="button"
-            className="chip-btn chip-btn-primary"
-            onClick={() => props.onToast("Booking opens when the scheduler is connected (next build phase).")}
-          >
-            Book
-          </button>
-        }
-      />
+    <section className="card pay-card" aria-label="Paid packages">
+      <h2 className="card-title">Go further</h2>
+      <p className="mb-3 text-sm text-ink-soft">
+        Keep the PDF book and join the private communities led by the CEO.
+      </p>
+      <button type="button" className="pay-cta" onClick={props.onPauseModal}>
+        Unlock the paid packages
+      </button>
+
+      <div className="mt-4 flex flex-col gap-3" aria-label="Paid items">
+        <PaidItem
+          title="PDF book"
+          explanation={PAID_ITEM_EXPLANATIONS.pdf}
+          unlocked={data.paidPdfUnlocked}
+          action={
+            <button
+              type="button"
+              className="chip-btn chip-btn-primary"
+              onClick={() => (data.paidPdfUnlocked ? undefined : props.setPayModalOpen(true))}
+            >
+              {data.paidPdfUnlocked ? "Download (soon)" : `Buy ${data.pdfPriceNaira.toLocaleString()} Naira`}
+            </button>
+          }
+        />
+        <PaidItem
+          title="WhatsApp group"
+          explanation={PAID_ITEM_EXPLANATIONS.whatsapp}
+          unlocked={data.whatsappGroupUnlocked}
+          action={
+            <button
+              type="button"
+              className="chip-btn chip-btn-primary"
+              onClick={() => props.joinPaidGroup(data.paidWhatsappGroupLink, data.whatsappGroupUnlocked, "WhatsApp")}
+            >
+              {data.whatsappGroupUnlocked ? "Join the WhatsApp group" : `Buy bundle ${data.bundlePriceNaira.toLocaleString()} Naira`}
+            </button>
+          }
+        />
+        <PaidItem
+          title="Telegram group"
+          explanation={PAID_ITEM_EXPLANATIONS.telegram}
+          unlocked={data.telegramGroupUnlocked}
+          action={
+            <button
+              type="button"
+              className="chip-btn chip-btn-primary"
+              onClick={() => props.joinPaidGroup(data.paidTelegramGroupLink, data.telegramGroupUnlocked, "Telegram")}
+            >
+              {data.telegramGroupUnlocked ? "Join the Telegram group" : `Buy bundle ${data.bundlePriceNaira.toLocaleString()} Naira`}
+            </button>
+          }
+        />
+      </div>
+
+      {props.payModalOpen && (
+        <PayModal
+          data={data}
+          onClose={() => props.setPayModalOpen(false)}
+          startPayment={props.startPayment}
+        />
+      )}
     </section>
   );
 }
 
-function RewardCard(props: {
+function PaidItem(props: {
   title: string;
+  explanation: string;
   unlocked: boolean;
-  lockedText: string;
-  unlockedAction: ReactNode;
+  action: ReactNode;
 }) {
   return (
-    <div className={`card ${props.unlocked ? "" : "frosted"}`}>
-      <h3 className="font-semibold">{props.title}</h3>
-      {props.unlocked ? (
-        <div className="mt-3">{props.unlockedAction}</div>
-      ) : (
-        <p className="mt-2 text-sm text-ink-soft">{props.lockedText}</p>
-      )}
+    <div className={`paid-item ${props.unlocked ? "" : "paid-item-locked"}`}>
+      <div className="flex-1">
+        <p className="font-semibold">
+          {props.title}
+          {props.unlocked ? null : <span className="ml-2 text-xs text-ink-soft">(locked)</span>}
+        </p>
+        <p className="text-sm text-ink-soft">{props.explanation}</p>
+      </div>
+      {props.action}
     </div>
   );
 }
+
+function PayModal(props: {
+  data: DashboardData;
+  onClose: () => void;
+  startPayment: (plan: "pdf" | "bundle") => Promise<void>;
+}) {
+  const [busy, setBusy] = useState<"pdf" | "bundle" | null>(null);
+  return (
+    <div className="pay-modal-backdrop" role="presentation" onClick={props.onClose}>
+      <div
+        className="pay-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Choose your package"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-lg font-bold">Choose your package</h3>
+          <button type="button" aria-label="Close" className="text-ink-soft" onClick={props.onClose}>
+            Close
+          </button>
+        </div>
+        <button
+          type="button"
+          className="pay-option"
+          disabled={busy !== null}
+          onClick={async () => {
+            setBusy("pdf");
+            await props.startPayment("pdf");
+            setBusy(null);
+          }}
+        >
+          <span className="font-semibold">PDF book only</span>
+          <span className="text-ink-soft">{props.data.pdfPriceNaira.toLocaleString()} Naira</span>
+          <span className="pay-option-sub">
+            {busy === "pdf" ? "Opening secure checkout..." : "Tap to pay with Paystack"}
+          </span>
+        </button>
+        <button
+          type="button"
+          className="pay-option"
+          disabled={busy !== null}
+          onClick={async () => {
+            setBusy("bundle");
+            await props.startPayment("bundle");
+            setBusy(null);
+          }}
+        >
+          <span className="font-semibold">PDF + WhatsApp group + Telegram group</span>
+          <span className="text-ink-soft">{props.data.bundlePriceNaira.toLocaleString()} Naira</span>
+          <span className="pay-option-sub">
+            {busy === "bundle" ? "Opening secure checkout..." : "Best value - everything unlocked"}
+          </span>
+        </button>
+        <p className="mt-2 text-xs text-ink-soft">
+          Payments are handled securely by Paystack. Nothing unlocks until your
+          payment is confirmed.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function Rewards(props: { data: DashboardData; onToast: (t: string) => void }) {
+  const { data } = props;
+  const ceoRemaining = Math.max(0, 10 - data.validReferralCount);
+  return (
+    <section aria-label="Rewards">
+      <div className={`card ${data.ceoCallUnlocked ? "" : "frosted"}`}>
+        <h3 className="font-semibold">One-on-one CEO strategy call</h3>
+        {data.ceoCallUnlocked ? (
+          <div className="mt-3">
+            <button
+              type="button"
+              className="chip-btn chip-btn-primary"
+              onClick={() => props.onToast("Booking opens when the scheduler is connected (next build phase).")}
+            >
+              Book
+            </button>
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-ink-soft">
+            Unlocks at 10 valid referrals ({ceoRemaining} to go).
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function ReferralsList({ referrals }: { referrals: DashboardReferral[] }) {
   return (
     <section className="card" aria-label="My referrals">
@@ -523,7 +873,9 @@ function ReferralsList({ referrals }: { referrals: DashboardReferral[] }) {
               <span className="text-ink-soft">
                 {new Date(r.joinedAt).toLocaleDateString()}
               </span>
-              <span className={statusClass(r.status)}>{r.status === "valid" ? "Verified" : r.status === "pending" ? "Pending" : "Invalid"}</span>
+              <span className={statusClass(r.status)}>
+                {r.status === "valid" ? "Verified" : r.status === "pending" ? "Pending" : "Invalid"}
+              </span>
             </li>
           ))}
         </ul>
@@ -538,18 +890,4 @@ function statusClass(status: DashboardReferral["status"]): string {
     : status === "pending"
       ? "rounded-full bg-slate-200 px-2 py-0.5 text-xs text-ink-soft"
       : "rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700";
-}
-
-function OffersStrip(props: { telegramUnlocked: boolean; onToast: (t: string) => void }) {
-  return (
-    <section className="card" aria-label="Offers">
-      <h2 className="card-title">Inside the group</h2>
-      <p className="text-sm text-ink-soft">
-        The Masterclass Training for Business Owners, Business Starter Kit,
-        Social Media Management Pack and CAC Business Registration Offer are
-        introduced in the Telegram group.{" "}
-        {props.telegramUnlocked ? "Join above." : "Unlock to see them."}
-      </p>
-    </section>
-  );
 }

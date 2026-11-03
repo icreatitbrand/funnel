@@ -9,16 +9,18 @@ import type { MutationCtx } from "./_generated/server";
   denormalized counter that is recalculated - never incremented blindly -
   so repeated and interleaved mutations stay correct.
 
-  Unlock rules (thresholds): Telegram at 1 valid referral (WhatsApp click
-  also required), PDF guide at 3, CEO strategy call at 10.
-  Unlock timestamps are recomputed on every relevant event; falling below a
-  threshold re-locks the reward (PRD: referral invalidation).
+  Unlock rules (thresholds, PRD v1.3): video modules at 1 valid referral
+  (WhatsApp step to the CEO also required), free course guide PDF at 3,
+  CEO strategy call at 10. Unlock timestamps are recomputed on every relevant
+  event; falling below a threshold re-locks the free reward (PRD: referral
+  invalidation). Payment unlocks (paidPdf/whatsappGroup/telegramGroup) are
+  NEVER touched here - they live in convex/payments.ts only.
 
   Milestone events (milestone_1/3/10) fire once per lifetime but rewards
   re-lock if the count falls below the threshold later.
 */
 
-const TELEGRAM_REFERRALS = 1;
+const VIDEO_REFERRALS = 1;
 const PDF_REFERRALS = 3;
 const CEO_CALL_REFERRALS = 10;
 
@@ -70,12 +72,12 @@ export async function recountReferrer(
 
   const whatsappClicked = user.whatsappClickedAt !== undefined;
 
-  const telegramEarning =
-    user.telegramUnlockedAt === undefined &&
+  const videoEarning =
+    user.videoUnlockedAt === undefined &&
     whatsappClicked &&
-    validCount >= TELEGRAM_REFERRALS;
-  const telegramRelocking =
-    user.telegramUnlockedAt !== undefined && validCount < TELEGRAM_REFERRALS;
+    validCount >= VIDEO_REFERRALS;
+  const videoRelocking =
+    user.videoUnlockedAt !== undefined && validCount < VIDEO_REFERRALS;
 
   const pdfEarning =
     user.pdfUnlockedAt === undefined && validCount >= PDF_REFERRALS;
@@ -90,8 +92,8 @@ export async function recountReferrer(
   const patch: Partial<Doc<"users">> = {
     validReferralCount: validCount,
   };
-  if (telegramEarning) patch.telegramUnlockedAt = now;
-  if (telegramRelocking) patch.telegramUnlockedAt = undefined;
+  if (videoEarning) patch.videoUnlockedAt = now;
+  if (videoRelocking) patch.videoUnlockedAt = undefined;
   if (pdfEarning) patch.pdfUnlockedAt = now;
   if (pdfRelocking) patch.pdfUnlockedAt = undefined;
   if (ceoEarning) patch.ceoCallUnlockedAt = now;
@@ -100,7 +102,7 @@ export async function recountReferrer(
   await ctx.db.patch(referrerId, patch);
 
   // Milestone events, fired once per lifetime (idempotent).
-  if (telegramEarning) {
+  if (videoEarning) {
     await ctx.db.insert("events", {
       userId: referrerId,
       type: "milestone_1",

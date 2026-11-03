@@ -1,16 +1,20 @@
 import { ConvexError, v } from "convex/values";
+import { internal } from "./_generated/api";
 import { mutation } from "./_generated/server";
 import { recountReferrer } from "./referrals";
 
 /*
-  Operations functions (PRD 6.9): there is no admin UI in v1 - these are run
+  Operations functions (PRD 6.10): there is no admin UI in v1 - these are run
   directly from the Convex dashboard Functions runner with an ops secret.
   Set it once with: npx convex env set OPS_SECRET <random string>
 
   - invalidateReferral: marks a referral invalid, recounts the referrer and
-    re-locks rewards if their count falls below the thresholds.
-  - setSetting: updates a runtime setting (e.g. WhatsApp number) without a
-    code deploy.
+    re-locks free rewards if their count falls below the thresholds (never
+    payment unlocks).
+  - setSetting: updates a runtime setting (e.g. CEO WhatsApp number) without
+    a code deploy.
+  - confirmPayment: manual confirm-by-reference fallback for payments the
+    webhook missed; applies the plan's unlocks exactly as Paystack would.
 */
 
 async function requireOpsSecret(args: { opsSecret: string }) {
@@ -45,8 +49,12 @@ export const invalidateReferral = mutation({
 const ALLOWED_SETTINGS = new Set([
   "ceoWhatsappNumber",
   "whatsappMessageTemplate",
-  "telegramInviteMode",
-  "telegramGroupLink",
+  "video1YoutubeUrl",
+  "video2YoutubeUrl",
+  "paidWhatsappGroupLink",
+  "paidTelegramGroupLink",
+  "pdfPriceNaira",
+  "bundlePriceNaira",
   "maxCeoCallsPerWeek",
   "launchDate",
 ]);
@@ -67,5 +75,24 @@ export const setSetting = mutation({
     } else {
       await ctx.db.insert("settings", { key: args.key, value: args.value });
     }
+  },
+});
+
+/** Manual payment confirmation fallback (PRD 6.7 step 4). */
+export const confirmPayment = mutation({
+  args: { reference: v.string(), opsSecret: v.string() },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<"confirmed" | "already_confirmed" | "amount_mismatch" | "not_found"> => {
+    await requireOpsSecret(args);
+    const result = await ctx.runMutation(
+      internal.payments.confirmByReference,
+      { reference: args.reference },
+    );
+    if (result === "not_found") {
+      throw new ConvexError(`Payment ${args.reference} not found.`);
+    }
+    return result;
   },
 });
