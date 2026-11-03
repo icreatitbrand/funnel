@@ -8,9 +8,12 @@ import { DEFAULT_COUNTRY_CODE } from "../lib/validation";
 */
 
 export const DEFAULT_SETTINGS = {
-  whatsappNumber: "2348000000000", // placeholder; digits only, no +
+  // The CEO's WhatsApp number (digits only, international format, no +).
+  // 07043420165 (local) -> 2347043420165 (international).
+  ceoWhatsappNumber: "2347043420165",
+  // Approved copy (PRD 6.3). Placeholders: {firstName}, {surname}, {email}.
   whatsappMessageTemplate:
-    "Hi Icreatit! I just joined the AI Foundry and Grant Winning Course. My name is {firstName} {surname}, my email is {email}.",
+    "Hello Sir, my name is {firstName} {surname}, I'm ready for the free course video modules.",
   telegramInviteMode: "static", // "bot" | "static" (Phase 5 wires the bot)
   telegramGroupLink: "",
   maxCeoCallsPerWeek: 15,

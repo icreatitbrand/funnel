@@ -29,6 +29,7 @@ interface DashboardReferral {
 
 interface DashboardData {
   firstName: string;
+  surname: string;
   referralCode: string;
   level: "Explorer" | "Connector" | "Builder" | "Scaler";
   validReferralCount: number;
@@ -37,7 +38,7 @@ interface DashboardData {
   pdfUnlocked: boolean;
   ceoCallUnlocked: boolean;
   email: string;
-  whatsappNumber: string;
+  ceoWhatsappNumber: string;
   whatsappMessageTemplate: string;
   telegramGroupLink: string;
   referrals: DashboardReferral[];
@@ -122,9 +123,9 @@ export function DashboardClient() {
 
   const whatsappText = data.whatsappMessageTemplate
     .replace("{firstName}", data.firstName)
-    .replace("{surname}", "") // surname not exposed; template copy is approved accordingly
+    .replace("{surname}", data.surname)
     .replace("{email}", data.email);
-  const waMe = `https://wa.me/${data.whatsappNumber}?text=${encodeURIComponent(whatsappText)}`;
+  const waMe = `https://wa.me/${data.ceoWhatsappNumber}?text=${encodeURIComponent(whatsappText)}`;
 
   function clickWhatsapp() {
     void recordWhatsappClick();

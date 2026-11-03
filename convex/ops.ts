@@ -43,7 +43,7 @@ export const invalidateReferral = mutation({
 });
 
 const ALLOWED_SETTINGS = new Set([
-  "whatsappNumber",
+  "ceoWhatsappNumber",
   "whatsappMessageTemplate",
   "telegramInviteMode",
   "telegramGroupLink",

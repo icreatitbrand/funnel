@@ -108,6 +108,7 @@ export const getDashboardData = query({
 
     return {
       firstName: user.firstName,
+      surname: user.surname,
       email: user.email,
       referralCode: user.referralCode,
       level: levelFor(user),
@@ -116,7 +117,7 @@ export const getDashboardData = query({
       telegramUnlocked: user.telegramUnlockedAt !== undefined,
       pdfUnlocked: user.pdfUnlockedAt !== undefined,
       ceoCallUnlocked: user.ceoCallUnlockedAt !== undefined,
-      whatsappNumber: String(settings.whatsappNumber),
+      ceoWhatsappNumber: String(settings.ceoWhatsappNumber),
       whatsappMessageTemplate: String(settings.whatsappMessageTemplate),
       telegramGroupLink: String(settings.telegramGroupLink),
       maxCeoCallsPerWeek: Number(settings.maxCeoCallsPerWeek),
@@ -134,6 +135,7 @@ export interface DashboardReferral {
 
 export interface DashboardData {
   firstName: string;
+  surname: string;
   email: string;
   referralCode: string;
   level: Level;
@@ -142,7 +144,7 @@ export interface DashboardData {
   telegramUnlocked: boolean;
   pdfUnlocked: boolean;
   ceoCallUnlocked: boolean;
-  whatsappNumber: string;
+  ceoWhatsappNumber: string;
   whatsappMessageTemplate: string;
   telegramGroupLink: string;
   maxCeoCallsPerWeek: number;
