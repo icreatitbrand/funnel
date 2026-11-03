@@ -90,7 +90,8 @@ export default defineSchema({
     milestone_3, milestone_10, referral_invalidated.
   */
   events: defineTable({
-    userId: v.id("users"),
+    // null for anonymous landing-page events before signup (PRD 5.2 analytics).
+    userId: v.optional(v.id("users")),
     type: v.string(),
     meta: v.optional(v.any()),
     createdAt: v.number(),

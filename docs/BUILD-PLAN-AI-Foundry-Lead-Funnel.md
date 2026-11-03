@@ -13,9 +13,9 @@ Phases are ordered by dependency, not by calendar. A phase is considered done on
 | Phase | State |
 |---|---|
 | 1 Foundations | Done (scaffold, schema v1, Convex dev deployment live) |
-| 2 Auth / signup / referral capture | Built; **blocked on one auth bug** (see Phase 2 note) |
-| 3 Core engine | Built against **PRD v1.2**; requires the v1.3 rework in this plan |
-| 4 Landing page | Not started |
+| 2 Auth / signup / referral capture | Built; server-side auth fix verified live — **awaiting user's browser login confirmation** (see Phase 2 note) |
+| 3 Core engine | **Done** — v1.3 rework built, pushed, committed (`a9d06a5`); payments engine + webhook live |
+| 4 Landing page | **Built** (all 9 sections, CTA rules, sticky bar, analytics; content placeholders pending client assets) |
 | 5 Integrations | Partial (Brevo OTP live in dev, key missing) |
 
 ---
@@ -113,6 +113,8 @@ The browser login currently fails with:
 - **No emojis anywhere**, including share text and form messages.
 
 **Exit criteria:** All PRD Section 5 rules verified; LCP under 2.5s on 4G mid-range Android.
+
+**Build note:** Implemented with IntersectionObserver + CSS-only motion (reveals, wave dividers, liquid buttons, hero blobs, count-ups, accordion, scroll depth) instead of GSAP/ScrollTrigger — 0 KB animation-library weight, transform/opacity-only, reduced-motion honoured. GSAP can be swapped in later if SVG-morph needs exceed CSS. All landing copy lives in `lib/landing.ts` (PLACEHOLDER marks pending client assets/claims). Analytics events (`convex/landing.ts` whitelist) written anonymously (`events.userId` made optional in schema v1.3).
 
 ---
 
