@@ -1,5 +1,6 @@
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 /*
   Referral engine (PRD 6.4) + unlock rules (PRD 4.1).
@@ -48,7 +49,24 @@ export async function validateReferralsForUser(
 
   const referredUser = await ctx.db.get(userId);
   if (promoted && referredUser?.referredBy) {
+    // Recount first so the email reflects the fresh count.
     await recountReferrer(ctx, referredUser.referredBy);
+
+    // "Each valid referral" automation email (PRD 6.9): one per referral,
+    // keyed by the referrer+referred pair so re-validations never resend.
+    const referrer = await ctx.db.get(referredUser.referredBy);
+    await ctx.runMutation(internal.emails.claimAndSend, {
+      sendKey: `referral_joined:${referredUser.referredBy}:${userId}`,
+      template: "referral_joined",
+      userId: referredUser.referredBy,
+      params: {
+        firstName: referrer?.firstName ?? "there",
+        validReferralCount: referrer?.validReferralCount ?? 0,
+        extra: {
+          referralName: `${referredUser.firstName ?? ""} ${referredUser.surname ?? ""}`.trim(),
+        },
+      },
+    });
   }
 }
 
@@ -101,13 +119,21 @@ export async function recountReferrer(
 
   await ctx.db.patch(referrerId, patch);
 
-  // Milestone events, fired once per lifetime (idempotent).
+  // Milestone events, fired once per lifetime (idempotent) + the matching
+  // automation emails (PRD 6.9), each guaranteed to fire at most once by the
+  // deterministic sendKey in convex/emails.ts.
   if (videoEarning) {
     await ctx.db.insert("events", {
       userId: referrerId,
       type: "milestone_1",
       meta: { validReferralCount: validCount },
       createdAt: now,
+    });
+    await scheduleMilestoneEmail(ctx, {
+      userId: referrerId,
+      template: "videos_unlocked",
+      firstName: user.firstName,
+      validCount,
     });
   }
   if (pdfEarning) {
@@ -117,6 +143,12 @@ export async function recountReferrer(
       meta: { validReferralCount: validCount },
       createdAt: now,
     });
+    await scheduleMilestoneEmail(ctx, {
+      userId: referrerId,
+      template: "guide_unlocked",
+      firstName: user.firstName,
+      validCount,
+    });
   }
   if (ceoEarning) {
     await ctx.db.insert("events", {
@@ -125,5 +157,31 @@ export async function recountReferrer(
       meta: { validReferralCount: validCount },
       createdAt: now,
     });
+    await scheduleMilestoneEmail(ctx, {
+      userId: referrerId,
+      template: "ceo_call_unlocked",
+      firstName: user.firstName,
+      validCount,
+    });
   }
+}
+
+async function scheduleMilestoneEmail(
+  ctx: MutationCtx,
+  args: {
+    userId: Id<"users">;
+    template: "videos_unlocked" | "guide_unlocked" | "ceo_call_unlocked";
+    firstName: string;
+    validCount: number;
+  },
+): Promise<void> {
+  await ctx.runMutation(internal.emails.claimAndSend, {
+    sendKey: `${args.template}:${args.userId}`,
+    template: args.template,
+    userId: args.userId,
+    params: {
+      firstName: args.firstName,
+      validReferralCount: args.validCount,
+    },
+  });
 }

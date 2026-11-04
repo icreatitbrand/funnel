@@ -1,9 +1,32 @@
 import { convexAuth } from "@convex-dev/auth/server";
 import type { AnyDataModel, GenericMutationCtx } from "convex/server";
+import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { ConvexError } from "convex/values";
+import { internal } from "./_generated/api";
 import { BrevoEmailOTP } from "./BrevoEmailOTP";
+import { ensureUnsubscribeToken } from "./emails";
 import { validateReferralsForUser } from "./referrals";
+/*
+  Post-verification automations (PRD 6.9, Phase 5): welcome email + Brevo
+  contact sync + unsubscribe token. Runs in BOTH createOrUpdateUser
+  verification branches; the emailSends sendKey makes repeats harmless.
+*/
+async function onFirstVerification(
+  ctx: GenericMutationCtx<AnyDataModel>,
+  userId: Id<"users">,
+): Promise<void> {
+  const mutationCtx = ctx as unknown as MutationCtx;
+  await ensureUnsubscribeToken(mutationCtx, userId);
+  // Welcome email + Brevo contact sync (PRD 6.9); the sendKey deduplicates.
+  await mutationCtx.runMutation(internal.emails.claimAndSend, {
+    sendKey: `welcome:${userId}`,
+    template: "welcome",
+    userId,
+    params: { firstName: (await mutationCtx.db.get(userId))?.firstName ?? "", validReferralCount: 0 },
+  });
+  await mutationCtx.runMutation(internal.emails.syncContact, { userId });
+}
 
 /*
   The createOrUpdateUser callback receives a context typed against Convex
@@ -70,6 +93,8 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
               ctx as unknown as MutationCtx,
               user._id,
             );
+            // Welcome email + contact sync (PRD 6.9).
+            await onFirstVerification(ctx, user._id);
           }
         }
         return args.existingUserId;
@@ -99,6 +124,8 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
             ctx as unknown as MutationCtx,
             pending._id,
           );
+          // Welcome email + contact sync (PRD 6.9).
+          await onFirstVerification(ctx, pending._id);
         }
         return pending._id;
       }

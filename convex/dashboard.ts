@@ -115,6 +115,14 @@ export const getDashboardData = query({
 
     const validCount = referrals.filter((r) => r.status === "valid").length;
 
+    /*
+      SECURITY (PRD Phase 5 exit criteria): gated content is unrecoverable
+      before unlock. The raw URLs/ids are only sent once the SERVER-side
+      unlock timestamp exists (videos: WhatsApp+referral; group links:
+      verified payment). Pre-unlock users receive empty strings, so replacing
+      the dashboard node module bundle cannot reveal them.
+    */
+    const videosUnlocked = user.videoUnlockedAt !== undefined;
     return {
       firstName: user.firstName,
       surname: user.surname,
@@ -124,7 +132,7 @@ export const getDashboardData = query({
       level: levelFor(user),
       validReferralCount: validCount,
       whatsappClicked: user.whatsappClickedAt !== undefined,
-      videosUnlocked: user.videoUnlockedAt !== undefined,
+      videosUnlocked,
       video1Started: user.video1StartedAt !== undefined,
       video2Engaged: user.video2EngagedAt !== undefined,
       pdfUnlocked: user.pdfUnlockedAt !== undefined,
@@ -134,10 +142,16 @@ export const getDashboardData = query({
       ceoCallUnlocked: user.ceoCallUnlockedAt !== undefined,
       ceoWhatsappNumber: String(settings.ceoWhatsappNumber),
       whatsappMessageTemplate: String(settings.whatsappMessageTemplate),
-      video1YoutubeUrl: String(settings.video1YoutubeUrl),
-      video2YoutubeUrl: String(settings.video2YoutubeUrl),
-      paidWhatsappGroupLink: String(settings.paidWhatsappGroupLink),
-      paidTelegramGroupLink: String(settings.paidTelegramGroupLink),
+      video1YoutubeUrl: videosUnlocked ? String(settings.video1YoutubeUrl) : "",
+      video2YoutubeUrl: videosUnlocked ? String(settings.video2YoutubeUrl) : "",
+      paidWhatsappGroupLink:
+        user.whatsappGroupUnlockedAt !== undefined
+          ? String(settings.paidWhatsappGroupLink)
+          : "",
+      paidTelegramGroupLink:
+        user.telegramGroupUnlockedAt !== undefined
+          ? String(settings.paidTelegramGroupLink)
+          : "",
       pdfPriceNaira: Number(settings.pdfPriceNaira),
       bundlePriceNaira: Number(settings.bundlePriceNaira),
       referrals,

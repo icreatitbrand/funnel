@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import { bareLinkText, fillShareMessage, SHARE_MESSAGES } from "@/lib/share";
 import { useYouTubeProgress, youtubeIdFromUrl } from "./useYouTubeProgress";
 
@@ -59,6 +60,7 @@ interface DashboardData {
 }
 
 type Level = DashboardData["level"];
+type BookingId = Id<"callBookings">;
 
 const AVATAR_COLORS: Record<string, string> = {
   auto: "#1e6f4f",
@@ -85,6 +87,13 @@ export function DashboardClient() {
   const recordVideo2Engaged = useMutation(api.dashboard.recordVideo2Engaged);
   const setAvatar = useMutation(api.dashboard.setAvatar);
   const initializePayment = useAction(api.payments.initializePayment);
+  const startGuideDownload = useMutation(api.files.startGuideDownload);
+  const startPaidBookDownload = useMutation(api.files.startPaidBookDownload);
+  const joinTelegramGroup = useAction(api.telegram.getGroupLink);
+  const bookCall = useMutation(api.calls.bookCall);
+  const cancelCall = useMutation(api.calls.cancelCall);
+  const recordBookingOpen = useMutation(api.calls.recordBookingOpen);
+  const myBooking = useQuery(api.calls.myCallBooking);
 
   const [toast, setToast] = useState<string | null>(null);
   const [payModalOpen, setPayModalOpen] = useState(false);
@@ -204,16 +213,59 @@ export function DashboardClient() {
     }
   };
 
-  const joinPaidGroup = (link: string, unlocked: boolean, kind: string) => {
+  const joinPaidGroup = (kind: "whatsapp" | "telegram") => {
+    const unlocked =
+      kind === "whatsapp" ? data.whatsappGroupUnlocked : data.telegramGroupUnlocked;
     if (!unlocked) {
       setToast("Unlocks after your payment is confirmed.");
       return;
     }
+    if (kind === "telegram") {
+      // Bot mode mints one single-use invite per click (server-side).
+      joinTelegramGroup({})
+        .then((res) => {
+          if (res.mode === "bot") {
+            setToast("Your personal one-time invite link was created.");
+          }
+          window.open(res.link, "_blank", "noopener");
+        })
+        .catch((err: unknown) => {
+          setToast(
+            err instanceof Error && err.message
+              ? err.message.replace("Uncaught Error: ", "")
+              : "Could not open the Telegram group.",
+          );
+        });
+      return;
+    }
+    const link = data.paidWhatsappGroupLink;
     if (!link) {
-      setToast(`The ${kind} group link is being prepared - check back shortly.`);
+      setToast("The WhatsApp group link is being prepared - check back shortly.");
       return;
     }
     window.open(link, "_blank", "noopener");
+  };
+
+  const downloadFile = (
+    kind: "guide" | "book",
+    unlocked: boolean,
+    lockMessage: string,
+  ) => {
+    if (!unlocked) {
+      setToast(lockMessage);
+      return;
+    }
+    const mutation =
+      kind === "guide" ? startGuideDownload : startPaidBookDownload;
+    mutation({})
+      .then((res) => window.open(res.downloadUrl, "_blank", "noopener"))
+      .catch((err: unknown) => {
+        setToast(
+          err instanceof Error && err.message
+            ? err.message.replace("Uncaught Error: ", "")
+            : "The download will be ready shortly.",
+        );
+      });
   };
 
   const primaryAction = !data.whatsappClicked
@@ -242,7 +294,7 @@ export function DashboardClient() {
 
       <VideoCourseSection data={data} onStarted={() => void recordVideo1Started()} onEngaged={() => void recordVideo2Engaged()} />
 
-      <FreeGuideCard data={data} onToast={setToast} />
+      <FreeGuideCard data={data} onToast={setToast} onDownload={() => downloadFile("guide", data.pdfUnlocked, "Reach 3 valid referrals to unlock the guide.")} />
 
       <ProgressTracker data={data} />
 
@@ -254,10 +306,20 @@ export function DashboardClient() {
           setPayModalOpen={setPayModalOpen}
           startPayment={startPayment}
           joinPaidGroup={joinPaidGroup}
+          onDownloadBook={() =>
+            downloadFile("book", data.paidPdfUnlocked, "The book unlocks after a verified payment.")
+          }
         />
       )}
 
-      <Rewards data={data} onToast={setToast} />
+      <Rewards
+        data={data}
+        onToast={setToast}
+        booking={myBooking}
+        onBook={(slot) => bookCall({ requestedFor: slot })}
+        onCancel={(bookingId) => cancelCall({ bookingId: bookingId as BookingId })}
+        onOpen={() => void recordBookingOpen()}
+      />
 
       <ReferralsList referrals={data.referrals} />
 
@@ -618,6 +680,7 @@ function VideoCourseSection(props: {
 function FreeGuideCard(props: {
   data: DashboardData;
   onToast: (t: string) => void;
+  onDownload: () => void;
 }) {
   const { data } = props;
   const remaining = Math.max(0, 3 - data.validReferralCount);
@@ -632,7 +695,7 @@ function FreeGuideCard(props: {
           <button
             type="button"
             className="chip-btn chip-btn-primary"
-            onClick={() => props.onToast("Guide downloads arrive with the next build phase.")}
+            onClick={props.onDownload}
           >
             Download
           </button>
@@ -679,7 +742,8 @@ function PaymentSection(props: {
   setPayModalOpen: (open: boolean) => void;
   onPauseModal: () => void;
   startPayment: (plan: "pdf" | "bundle") => Promise<void>;
-  joinPaidGroup: (link: string, unlocked: boolean, kind: string) => void;
+  joinPaidGroup: (kind: "whatsapp" | "telegram") => void;
+  onDownloadBook: () => void;
 }) {
   const { data } = props;
   return (
@@ -701,9 +765,11 @@ function PaymentSection(props: {
             <button
               type="button"
               className="chip-btn chip-btn-primary"
-              onClick={() => (data.paidPdfUnlocked ? undefined : props.setPayModalOpen(true))}
+              onClick={() =>
+                data.paidPdfUnlocked ? props.onDownloadBook() : props.setPayModalOpen(true)
+              }
             >
-              {data.paidPdfUnlocked ? "Download (soon)" : `Buy ${data.pdfPriceNaira.toLocaleString()} Naira`}
+              {data.paidPdfUnlocked ? "Download the book" : `Buy ${data.pdfPriceNaira.toLocaleString()} Naira`}
             </button>
           }
         />
@@ -715,7 +781,7 @@ function PaymentSection(props: {
             <button
               type="button"
               className="chip-btn chip-btn-primary"
-              onClick={() => props.joinPaidGroup(data.paidWhatsappGroupLink, data.whatsappGroupUnlocked, "WhatsApp")}
+              onClick={() => props.joinPaidGroup("whatsapp")}
             >
               {data.whatsappGroupUnlocked ? "Join the WhatsApp group" : `Buy bundle ${data.bundlePriceNaira.toLocaleString()} Naira`}
             </button>
@@ -729,7 +795,7 @@ function PaymentSection(props: {
             <button
               type="button"
               className="chip-btn chip-btn-primary"
-              onClick={() => props.joinPaidGroup(data.paidTelegramGroupLink, data.telegramGroupUnlocked, "Telegram")}
+              onClick={() => props.joinPaidGroup("telegram")}
             >
               {data.telegramGroupUnlocked ? "Join the Telegram group" : `Buy bundle ${data.bundlePriceNaira.toLocaleString()} Naira`}
             </button>
@@ -830,28 +896,142 @@ function PayModal(props: {
   );
 }
 
-function Rewards(props: { data: DashboardData; onToast: (t: string) => void }) {
-  const { data } = props;
+function Rewards(props: {
+  data: DashboardData;
+  onToast: (t: string) => void;
+  booking:
+    | { _id: BookingId; scheduledFor: number }
+    | null
+    | undefined;
+  onBook: (slot: number) => Promise<{ booked: boolean; reason?: string } | void>;
+  onCancel: (bookingId: BookingId) => Promise<unknown>;
+  onOpen: () => void;
+}) {
+  const { data, booking } = props;
   const ceoRemaining = Math.max(0, 10 - data.validReferralCount);
-  return (
-    <section aria-label="Rewards">
-      <div className={`card ${data.ceoCallUnlocked ? "" : "frosted"}`}>
-        <h3 className="font-semibold">One-on-one CEO strategy call</h3>
-        {data.ceoCallUnlocked ? (
-          <div className="mt-3">
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [slot, setSlot] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (!slot) {
+      props.onToast("Pick a date and time first.");
+      return;
+    }
+    const ms = new Date(slot).getTime();
+    if (Number.isNaN(ms)) {
+      props.onToast("Pick a valid date and time.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const result = await props.onBook(ms);
+      if (result && result.booked === false && result.reason) {
+        props.onToast(result.reason);
+      } else {
+        setPanelOpen(false);
+        setSlot("");
+        props.onToast("Call booked. The CEO has been notified.");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (data.ceoCallUnlocked) {
+    return (
+      <section aria-label="Rewards">
+        <div className="card">
+          <h3 className="font-semibold">One-on-one CEO strategy call</h3>
+          {booking ? (
+            <div className="mt-3 flex flex-col gap-2">
+              <p className="text-sm text-ink-soft">
+                Upcoming call:{" "}
+                <strong className="text-ink">
+                  {new Date(booking.scheduledFor).toLocaleString("en-NG", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                </strong>
+              </p>
+              <button
+                type="button"
+                className="chip-btn chip-btn-primary self-start"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  try {
+                    await props.onCancel(booking._id);
+                    props.onToast("Call cancelled.");
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                Cancel booking
+              </button>
+            </div>
+          ) : panelOpen ? (
+            <div className="mt-3 flex flex-col gap-2">
+              <label htmlFor="call-slot" className="text-sm text-ink-soft">
+                Pick a slot (7am - 8pm Lagos time)
+              </label>
+              <input
+                id="call-slot"
+                type="datetime-local"
+                className="input-field"
+                min={new Date(Date.now() + 3600_000).toISOString().slice(0, 16)}
+                max={new Date(Date.now() + 14 * 86_400_000).toISOString().slice(0, 16)}
+                value={slot}
+                onChange={(e) => setSlot(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className="chip-btn chip-btn-primary"
+                  disabled={busy}
+                  onClick={() => void submit()}
+                >
+                  {busy ? "Booking..." : "Confirm booking"}
+                </button>
+                <button
+                  type="button"
+                  className="chip-btn"
+                  disabled={busy}
+                  onClick={() => setPanelOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+              <p className="text-xs text-ink-soft">
+                A valid email reaches the CEO instantly with your name, referral
+                stats and the requested time.
+              </p>
+            </div>
+          ) : (
             <button
               type="button"
-              className="chip-btn chip-btn-primary"
-              onClick={() => props.onToast("Booking opens when the scheduler is connected (next build phase).")}
+              className="chip-btn chip-btn-primary mt-3"
+              onClick={() => {
+                props.onOpen();
+                setPanelOpen(true);
+              }}
             >
-              Book
+              Book my call
             </button>
-          </div>
-        ) : (
-          <p className="mt-2 text-sm text-ink-soft">
-            Unlocks at 10 valid referrals ({ceoRemaining} to go).
-          </p>
-        )}
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section aria-label="Rewards">
+      <div className="card frosted">
+        <h3 className="font-semibold">One-on-one CEO strategy call</h3>
+        <p className="mt-2 text-sm text-ink-soft">
+          Unlocks at 10 valid referrals ({ceoRemaining} to go).
+        </p>
       </div>
     </section>
   );

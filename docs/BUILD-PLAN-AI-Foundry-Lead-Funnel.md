@@ -16,7 +16,7 @@ Phases are ordered by dependency, not by calendar. A phase is considered done on
 | 2 Auth / signup / referral capture | Built; server-side auth fix verified live — **awaiting user's browser login confirmation** (see Phase 2 note) |
 | 3 Core engine | **Done** — v1.3 rework built, pushed, committed (`a9d06a5`); payments engine + webhook live |
 | 4 Landing page | **Built** (all 9 sections, CTA rules, sticky bar, analytics; content placeholders pending client assets) |
-| 5 Integrations | Partial (Brevo OTP live in dev, key missing) |
+| 5 Integrations | **Built in code** (email engine + automations, nudges cron, call booking, Telegram invites, PDF delivery, ops tooling); **needs env keys** (BREVO_API_KEY, TELEGRAM_BOT_TOKEN, PAYSTACK_SECRET_KEY, CEO_NOTIFICATION_EMAIL) before live E2E verification |
 
 ---
 
@@ -131,6 +131,10 @@ The browser login currently fails with:
 - **Operations tooling (no admin UI in v1):** saved Convex dashboard queries for funnel counts (incl. video unlocks, video-2 engagement, payments) and top referrers; the referral-invalidation and manual-payment-confirmation mutations runnable from the Convex dashboard; a Convex action that exports leads (with referral stats) as CSV for follow-up.
 
 **Exit criteria:** All emails fire once only (verified with test events); gated URLs (videos handled at unlock, PDFs/`paid` group links) are unrecoverable pre-unlock; Paystack test transactions unlock the right plan end-to-end; CEO receives booking notifications end-to-end.
+
+**Build note:** One delivery path for every email (`convex/emails.ts`): deterministic sendKeys claimed in `emailSends` BEFORE anything touches the network → scheduler → `deliverNow` action → `finalizeSend`. Bulk templates honour per-user unsubscribe (`/unsubscribe?t=token`, random token stamped at first verification); payment-receipt and CEO notification emails always deliver. Dev fallback logs full content to Convex function logs when BREVO_API_KEY is absent. Nudges run hourly via `convex/crons.ts`; windows are +/-5h with claim-based dedupe. PDFs are served as per-request storage URLs gated by unlock timestamps (`convex/files.ts`); Telegram uses single-use bot invites with static fallback (`convex/telegram.ts`); call bookings notify the CEO on book/reschedule/cancel (`convex/calls.ts`). Gated-URL leak fixed: `getDashboardData` now returns video URLs/group links only when the server-side unlock exists. Ops: `funnelCounts`, `topReferrers`, `listPayments`, `exportLeads` (CSV).
+
+**Progress: CODE COMPLETE + PUSHED.** All Phase 5 modules deployed to `giddy-retriever-670` (verified via function-spec: emails/calls/nudges/telegram/files all live), convex + app `tsc` clean, `/`, `/dashboard`, `/auth`, `/unsubscribe` smoke-tested 200. Commit pending at build time; live E2E (Brevo/Paystack/Telegram/PDF) blocked on env keys and assets listed in the launch checklist.
 
 ---
 

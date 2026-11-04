@@ -2,7 +2,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import type { MutationCtx, QueryCtx } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
 import {
   action,
   internalMutation,
@@ -60,6 +60,14 @@ export const loadUserForPayment = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
     return ctx.db.get(args.userId);
+  },
+});
+
+/** Action contexts have no db access; settings are loaded through a query. */
+export const loadSettingsForPayment = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return getSettings(ctx);
   },
 });
 
@@ -127,6 +135,28 @@ export const confirmByReference = internalMutation({
       meta: args.paystackMeta ?? undefined,
     });
     await applyPaidUnlocks(ctx, { userId: payment.userId, plan: payment.plan });
+
+    // Payment-confirmed receipt/access email (PRD 6.9) - claimed via the
+    // deterministic sendKey so webhook replays stay single-send.
+    const payer = await ctx.db.get(payment.userId);
+    await ctx.runMutation(internal.emails.claimAndSend, {
+      sendKey: `payment_confirmed:${payment._id}`,
+      template: "payment_confirmed",
+      userId: payment.userId,
+      params: {
+        firstName: payer?.firstName ?? "there",
+        validReferralCount: payer?.validReferralCount ?? 0,
+        extra: {
+          summary:
+            payment.plan === "bundle"
+              ? "the PDF book plus the private WhatsApp and Telegram groups"
+              : "the PDF book",
+        },
+      },
+    });
+    await ctx.scheduler.runAfter(0, internal.emails.syncContact, {
+      userId: payment.userId,
+    });
     return "confirmed";
   },
 });
@@ -181,7 +211,7 @@ export const initializePayment = action({
       throw new ConvexError("You already have the PDF book.");
     }
 
-    const settings = await getSettings(ctx as unknown as QueryCtx);
+    const settings = await ctx.runQuery(internalLoadSettingsForPayment, {});
     const amountNaira =
       args.plan === "pdf"
         ? Number(settings.pdfPriceNaira)
@@ -246,3 +276,4 @@ export const initializePayment = action({
 /** Internal references resolved via the generated module map. */
 const internalLoadUser = internal.payments.loadUserForPayment;
 const internalCreatePending = internal.payments.createPendingPayment;
+const internalLoadSettingsForPayment = internal.payments.loadSettingsForPayment;

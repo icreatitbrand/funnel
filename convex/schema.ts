@@ -52,6 +52,8 @@ const users = defineTable({
   telegramGroupUnlockedAt: v.optional(v.number()), // bundle payment verified
   ceoCallUnlockedAt: v.optional(v.number()), // 10 valid referrals
   avatarId: v.optional(v.string()), // preset id; see AVATAR_PRESETS (client)
+  unsubscribeToken: v.optional(v.string()), // random token for email unsubscribe links
+  unsubscribedAt: v.optional(v.number()), // set via the unsubscribe page; pauses bulk course emails
   consentAt: v.number(), // NDPA consent timestamp
   role: v.union(v.literal("user"), v.literal("admin")), // ops/scripts only; no admin UI in v1
   flagged: v.boolean(),
@@ -159,4 +161,25 @@ export default defineSchema({
     email: v.string(), // lowercase
     createdAt: v.number(),
   }).index("by_email", ["email"]),
+
+  /*
+    Internal bookkeeping that guarantees every automation email fires at most
+    once per user (PRD Phase 5 exit criteria). A row is claimed BEFORE the
+    Brevo action runs; the action then flips the status. sendKey is a
+    deterministic unique string such as "welcome:{userId}".
+  */
+  emailSends: defineTable({
+    sendKey: v.string(),
+    template: v.string(),
+    userId: v.optional(v.id("users")),
+    status: v.union(
+      v.literal("queued"),
+      v.literal("sent"),
+      v.literal("failed"),
+      v.literal("skipped"), // unsubscribed
+    ),
+    sentAt: v.optional(v.number()),
+    brevoMessageId: v.optional(v.string()),
+    error: v.optional(v.string()),
+  }).index("by_sendKey", ["sendKey"]),
 });
