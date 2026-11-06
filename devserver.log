@@ -1,0 +1,21 @@
+
+> icreatit-ai-foundry-funnel@0.1.0 dev
+> next dev
+
+▲ Next.js 16.4.3 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+- Environments: .env.local
+✓ Ready in 27.2s
+✓ Running next.config.ts took 4.9s
+⚠ Slow filesystem detected. The benchmark took 779ms. If \\?\C:\Users\MYNE WILFRED\Downloads\icreatit-brand_funnel\.next\dev is a network drive, consider moving it to a local folder.
+See more: https://nextjs.org/docs/app/guides/local-development
+
+✓ Generated AGENTS.md for AI agents. Set `agentRules: false` in next.config to disable.
+○ Compiling / ...
+ GET / 200 in 5.5s (next.js: 4.3s, application-code: 1147ms)
+ GET /dashboard 200 in 790ms (next.js: 37ms, application-code: 752ms)
+ GET /unsubscribe 200 in 170ms (next.js: 24ms, application-code: 146ms)
+ GET / 200 in 282ms (next.js: 14ms, application-code: 268ms)
+  Reload env: .env.local
+✓ Compiled in 917ms

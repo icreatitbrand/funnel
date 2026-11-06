@@ -63,10 +63,10 @@ type Level = DashboardData["level"];
 type BookingId = Id<"callBookings">;
 
 const AVATAR_COLORS: Record<string, string> = {
-  auto: "#1e6f4f",
-  sage: "#2f8f68",
+  auto: "#2563eb",
+  sage: "#3b82f6",
   slate: "#475569",
-  amber: "#d9a441",
+  amber: "#dc2626",
   rose: "#c4506b",
   sky: "#2f7ea8",
   violet: "#6d59b5",
