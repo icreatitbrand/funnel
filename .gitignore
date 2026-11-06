@@ -27,3 +27,6 @@ auth-keys.txt
 
 codegen.log
 convextsc.log
+
+# local run logs
+*.log
