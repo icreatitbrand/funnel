@@ -27,7 +27,7 @@ export const CTA_TRACK_ID = {
 } as const;
 
 export const VIDEO_SECTION = {
-  teaserYoutubeUrl: "", // PLACEHOLDER: paste the teaser/promo video URL; "" shows a graceful placeholder
+  teaserYoutubeUrl: "https://youtu.be/j9CMOT4LYx4", // homepage video facade
   intro:
     "Watch a short taste of what you will learn before you sign up.",
 };

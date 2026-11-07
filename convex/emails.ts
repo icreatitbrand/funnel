@@ -35,7 +35,8 @@ const BREVO_HOST = "https://api.brevo.com/v3";
 
 const COMPANY = "Icreatit Brand Limited";
 const COMPANY_ADDRESS = "[Company address placeholder - replace before launch]";
-const SUPPORT_EMAIL = "support@icreatitbrandagency.com";
+// Verified Brevo sender (info@ is the approved sender address).
+const SUPPORT_EMAIL = "info@icreatitbrandagency.com";
 const FROM_NAME = "Icreatit Brand Course";
 
 type TemplateId =
@@ -313,7 +314,7 @@ export const deliverNow = internalAction({
           accept: "application/json",
         },
         body: JSON.stringify({
-          sender: { name: args.fromName, email: SUPPORT_EMAIL }, // TODO: verify sender in Brevo
+          sender: { name: args.fromName, email: SUPPORT_EMAIL },
           to: [{ email: args.to }],
           subject: args.subject,
           textContent: args.text,

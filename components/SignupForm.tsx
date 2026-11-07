@@ -11,6 +11,7 @@ import {
   DESCRIPTION_MAX,
   GENDER_VALUES,
   type Gender,
+  formatNationalPhone,
   isValidDescription,
   isValidEmail,
   isValidName,
@@ -31,7 +32,17 @@ import { api } from "../convex/_generated/api";
   Only after the code is verified does a session exist.
 */
 
-const COUNTRY_CODES = ["+234", "+233", "+254", "+27", "+44", "+1", "+61"];
+const COUNTRY_CODE_LABELS: Record<string, string> = {
+  "+234": "Nigeria",
+  "+233": "Ghana",
+  "+254": "Kenya",
+  "+27": "South Africa",
+  "+44": "United Kingdom",
+  "+1": "USA/Canada",
+  "+61": "Australia",
+};
+
+const COUNTRY_CODES = Object.keys(COUNTRY_CODE_LABELS);
 
 const FIELD_MESSAGES: Record<string, string> = {
   firstName: "Enter a valid first name (2-50 letters).",
@@ -228,12 +239,13 @@ export function SignupForm() {
                 onChange={(e) =>
                   setIdentity({ ...identity, countryCode: e.target.value })
                 }
+                autoComplete="tel-country-code"
                 aria-label="Country code"
-                className="input-field w-24 shrink-0"
+                className="input-field w-32 shrink-0"
               >
                 {COUNTRY_CODES.map((code) => (
                   <option key={code} value={code}>
-                    {code}
+                    {`${code} ${COUNTRY_CODE_LABELS[code]}`}
                   </option>
                 ))}
               </select>
@@ -245,11 +257,21 @@ export function SignupForm() {
                 placeholder="801 234 5678"
                 value={identity.phone}
                 onChange={(e) =>
-                  setIdentity({ ...identity, phone: e.target.value })
+                  setIdentity({
+                    ...identity,
+                    phone: formatNationalPhone(
+                      e.target.value,
+                      identity.countryCode,
+                    ),
+                  })
                 }
+                aria-describedby="phone-help"
                 className="input-field"
               />
             </div>
+            <span id="phone-help" className="text-xs font-normal text-ink-soft">
+              7-10 digits after the country code; leave out the first 0.
+            </span>
           </label>
           <IdentityField
             label="Email address"

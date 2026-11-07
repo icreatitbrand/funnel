@@ -70,6 +70,37 @@ const COUNTRY_CODES = ["+234", "+233", "+254", "+27", "+44", "+1", "+61"];
 export const DEFAULT_COUNTRY_CODE = "+234";
 
 /**
+ * Formats typed national digits into readable groups (3-3-4 style) while the
+ * visitor types, so the phone field is easy to fill on mobile. Strips
+ * non-digits, leading zeros, and a pasted full number's dial code.
+ */
+export function formatNationalPhone(raw: string, countryCode: string) {
+  let digits = raw.replace(/\D/g, "");
+  const dial = countryCode.replace(/\D/g, "");
+  // A pasted full number (with dial code) is longer than 10 national digits.
+  if (digits.length > 10 && dial && digits.startsWith("00" + dial)) {
+    digits = digits.slice(2 + dial.length);
+  } else if (digits.length > 10 && dial && digits.startsWith(dial)) {
+    digits = digits.slice(dial.length);
+  }
+  // Strip a leading zero (national trunk prefix) once more digits exist.
+  digits = digits.replace(/^0+(?=\d)/, "");
+
+  const groups: string[] = [];
+  let index = 0;
+  while (index < digits.length) {
+    const remain = digits.length - index;
+    if (remain === 4) {
+      groups.push(digits.slice(index));
+      break;
+    }
+    groups.push(digits.slice(index, index + 3));
+    index += 3;
+  }
+  return groups.slice(0, 4).join(" ");
+}
+
+/**
  * Builds an E.164 number from a selected country dial code plus the
  * national digits the visitor typed. Returns null when invalid.
  * Uganda etc. enforce 7-10 national digits (covers NG 10-digit numbers).
