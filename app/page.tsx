@@ -76,7 +76,7 @@ export default function HomePage() {
       <section className="section section-video" id="video" aria-label="Course teaser video">
         <Reveal className="section-inner">
           <p className="kicker">Before you sign up</p>
-          <h2>A taste of the value</h2>
+          <h2>Watch this video 👇</h2>
           <VideoFacade
             youtubeUrl={VIDEO_SECTION.teaserYoutubeUrl}
             trackId="landing_video_tap"

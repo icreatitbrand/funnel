@@ -36,21 +36,21 @@ export const MODULES = [
   {
     id: "mod-1",
     kicker: "Module 1",
-    title: "How to win business grants",
+    title: "Using AI for your business and marketing on social media",
     outcomes: [
-      "Find grants your business actually qualifies for",
-      "Write applications that stand out",
-      "Learn how to apply, step by step",
+      "Put AI to work in daily business tasks",
+      "Create social media content with AI tools",
+      "Use AI to find and win funding opportunities",
     ],
   },
   {
     id: "mod-2",
     kicker: "Module 2",
-    title: "Using AI for your business and marketing on social media",
+    title: "How to raise funds & win business grants",
     outcomes: [
-      "Put AI to work in daily business tasks",
-      "Create social media content with AI tools",
-      "Grow your pages without an agency budget",
+      "Discover different forms of funding",
+      "The Tony Elumelu Foundation grant",
+      "Winning through my guide and support community",
     ],
   },
 ];

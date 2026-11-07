@@ -639,7 +639,7 @@ function VideoCourseSection(props: {
           <VideoModule
             id="module-1"
             index={1}
-            title="How to win business grants"
+            title="Using AI for your business and marketing on social media"
             youtubeUrl={data.video1YoutubeUrl}
             unlocked
             onStarted={onStarted}
@@ -650,7 +650,7 @@ function VideoCourseSection(props: {
           <VideoModule
             id="module-2"
             index={2}
-            title="Using AI for your business and marketing it"
+            title="How to raise funds & win business grants"
             youtubeUrl={data.video2YoutubeUrl}
             unlocked
             onStarted={() => {}}
