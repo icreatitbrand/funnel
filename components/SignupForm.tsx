@@ -233,7 +233,7 @@ export function SignupForm() {
           />
           <label className="flex flex-col gap-1 text-sm font-semibold">
             Phone number
-            <div className="flex gap-2">
+            <div className="grid grid-cols-[auto_1fr] gap-2">
               <select
                 value={identity.countryCode}
                 onChange={(e) =>
@@ -241,7 +241,7 @@ export function SignupForm() {
                 }
                 autoComplete="tel-country-code"
                 aria-label="Country code"
-                className="input-field w-32 shrink-0"
+                className="input-field"
               >
                 {COUNTRY_CODES.map((code) => (
                   <option key={code} value={code}>
