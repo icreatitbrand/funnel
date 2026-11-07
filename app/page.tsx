@@ -142,12 +142,14 @@ export default function HomePage() {
             <div>
               <p className="ceo-name">{CEO.name}</p>
               <p className="ceo-title">{CEO.title}</p>
-              <p className="ceo-bio">{CEO.bio}</p>
+              <div className="ceo-bio">
+                {CEO.bio.map((paragraph) => (
+                  <p key={paragraph.slice(0, 24)}>{paragraph}</p>
+                ))}
+              </div>
               <blockquote className="ceo-quote">{CEO.quote}</blockquote>
-              <p className="ceo-call-line">
-                Every learner who reaches 10 referrals gets a one-on-one
-                strategy call with him.
-              </p>
+              <p className="ceo-call-line">{CEO.callLine}</p>
+              <p className="ceo-closing">{CEO.closing}</p>
             </div>
           </div>
           <div className="cta-row">

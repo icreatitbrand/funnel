@@ -59,11 +59,21 @@ export const ACCESS_EXPLAINER =
   "Access is simple: sign up, send a WhatsApp message to the CEO, and refer one friend. Both video modules unlock immediately, free.";
 
 export const CEO = {
-  name: "Icreate", // PLACEHOLDER: replace with the CEO's public face details
-  title: "Founder and CEO, Icreatit Brand Limited",
-  bio: "PLACEHOLDER: short bio - credibility points, grants won or supported, trainings delivered, businesses served.",
+  name: "Pastor Wisdom Ifeanyi",
+  title: "Founder & CEO, ICREATIT BRAND LIMITED | Founder, EXCEL IN SCHOOL",
+  bio: [
+    "My journey as an entrepreneur began with a dream, determination, and a strong desire to create impact, even when I had very little.",
+    "In my first year at the university, I raised a ₦1 million soft loan to kickstart my entrepreneurial journey. In my second year, I took things further by winning two grants: a ₦300,000 grant and the prestigious $5,000 Tony Elumelu Foundation Entrepreneurship Programme grant. By my third year, I had launched EXCEL IN SCHOOL, my EdTech company dedicated to helping students achieve academic and personal excellence.",
+    "Beyond entrepreneurship and grant funding, I am passionate about digital marketing and business growth. I am a Social Media Marketing expert and was among the Social Media Experts trained by the Federal Government of Nigeria through the TVET Programme. Through ICREATIT BRAND LIMITED, I have worked with businesses to build their brands, improve their online presence, and leverage digital opportunities for growth.",
+    "Today, I am on a mission to help 1,000 Nigerian entrepreneurs, especially student entrepreneurs, apply for and win the 2027 Tony Elumelu Foundation Entrepreneurship Programme grant.",
+    "I understand how competitive the $5,000 grant is. That is why I documented the application processes, strategies, and write-ups I used to secure my own grant. I am bringing these experiences into this FREE crash course to help you approach your application with greater clarity, confidence, and preparation.",
+    "My goal is simple: to help you turn your business idea into a fundable venture.",
+  ],
   quote:
-    "PLACEHOLDER: personal message or quote in the CEO's own words about why this course is free.",
+    "You are not just learning from a teacher; you are learning from someone who has walked the journey and is committed to helping you succeed.",
+  callLine:
+    "Every learner who reaches 10 referrals earns a one-on-one strategy call with me.",
+  closing: "Let's make your entrepreneurial dream a reality!",
 };
 
 export const ABOUT = {
