@@ -33,14 +33,16 @@ import { api } from "../convex/_generated/api";
   Only after the code is verified does a session exist.
 */
 
+// Short ISO-style labels keep the country select narrow so the phone number
+// field gets most of the row width. Nigeria first.
 const COUNTRY_CODE_LABELS: Record<string, string> = {
-  "+234": "Nigeria",
-  "+233": "Ghana",
-  "+254": "Kenya",
-  "+27": "South Africa",
-  "+44": "United Kingdom",
-  "+1": "USA/Canada",
-  "+61": "Australia",
+  "+234": "NG",
+  "+233": "GH",
+  "+254": "KE",
+  "+27": "ZA",
+  "+44": "UK",
+  "+1": "US/CA",
+  "+61": "AU",
 };
 
 const COUNTRY_CODES = Object.keys(COUNTRY_CODE_LABELS);
@@ -245,7 +247,7 @@ export function SignupForm() {
           />
           <label className="flex flex-col gap-1 text-sm font-semibold">
             Phone number
-            <div className="grid grid-cols-[auto_1fr] gap-2">
+            <div className="grid grid-cols-[6rem_1fr] gap-2">
               <select
                 value={identity.countryCode}
                 onChange={(e) =>
