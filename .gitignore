@@ -12,8 +12,9 @@ next-env.d.ts
 .env*.local
 convex/.env.local
 
-# convex generated client (created by `convex dev`)
-convex/_generated/
+# NOTE: convex/_generated is NOT ignored — it is committed so Vercel's fresh
+# clone resolves `convex/_generated/api` during `next build` (no Convex
+# compiler runs on Vercel). Regenerate via `npx convex codegen` after pushes.
 
 # vercel
 .vercel/
