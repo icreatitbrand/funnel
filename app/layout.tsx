@@ -1,7 +1,15 @@
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import { RefCapture } from "@/components/RefCapture";
+import { Inter } from "next/font/google";
 import type { Metadata } from "next";
 import "./globals.css";
+
+/* Brand typeface: Inter everywhere (loaded self-managed by next/font). */
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
 
 const siteUrl =
   process.env.NEXT_PUBLIC_APP_URL ?? "https://techhub.icreatitbrandagency.com";
@@ -36,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body suppressHydrationWarning>
         <ConvexClientProvider>
           <RefCapture />

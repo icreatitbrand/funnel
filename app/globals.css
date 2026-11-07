@@ -16,9 +16,10 @@
   --color-surface: #ffffff;
   --color-surface-alt: #f5f7fb;
 
-  /* TODO replace with real brand typefaces when assets arrive */
-  --font-display: system-ui, sans-serif;
-  --font-body: system-ui, sans-serif;
+  /* Brand typeface: Inter (self-managed via next/font, variable --font-inter
+     on <html>) with a system-ui fallback. */
+  --font-display: var(--font-inter), system-ui, sans-serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
 }
 
 body {
@@ -479,17 +480,20 @@ button:focus-visible {
   align-items: center;
   padding: 1rem 1.25rem 0;
 }
-.logo-lockup {
+/* Brand logo on a white plate so the multicolor lockup stays legible on dark
+   hero/footer surfaces. */
+.logo-plate {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  background: #ffffff;
+  border-radius: 0.55rem;
+  padding: 0.35rem 0.55rem;
+  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.35);
 }
-.logo-word {
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  color: #fff;
-  opacity: 0.92;
+.logo-plate img {
+  display: block;
+  width: auto;
+  height: auto;
 }
 .hero-copy {
   position: relative;
@@ -807,12 +811,18 @@ button:focus-visible {
   background: #fff;
 }
 .ceo-photo {
-  display: grid;
-  place-items: center;
   width: 96px;
   border-radius: 1rem;
+  overflow: hidden;
   background: var(--color-surface-alt);
-  padding: 0.25rem;
+}
+.ceo-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+@media (min-width: 640px) {
+  .ceo-photo { width: 180px; }
 }
 .ceo-name {
   font-weight: 800;

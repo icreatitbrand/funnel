@@ -3,6 +3,7 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useMutation } from "convex/react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { consumeReferralCode, readReferralCode } from "@/lib/referral";
@@ -199,6 +200,17 @@ export function SignupForm() {
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-10">
+      <div className="mb-6 flex justify-center">
+        <span className="logo-plate">
+          <Image
+            src="/brand/logo.png"
+            alt="Icreatit Brand Limited"
+            width={199}
+            height={30}
+            priority
+          />
+        </span>
+      </div>
       {/* progress indicator */}
       <ol className="mb-8 flex items-center gap-2" aria-label="Signup progress">
         {[1, 2, 3].map((n) => (

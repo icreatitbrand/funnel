@@ -2,6 +2,7 @@
 
 import { useAuthActions } from "@convex-dev/auth/react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { isValidEmail } from "@/lib/validation";
@@ -71,6 +72,17 @@ export function LoginForm() {
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-10">
+      <div className="mb-6 flex justify-center">
+        <span className="logo-plate">
+          <Image
+            src="/brand/logo.png"
+            alt="Icreatit Brand Limited"
+            width={199}
+            height={30}
+            priority
+          />
+        </span>
+      </div>
       {stage === "email" ? (
         <form
           noValidate

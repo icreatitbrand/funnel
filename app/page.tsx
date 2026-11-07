@@ -5,6 +5,7 @@ import { LandingTracker } from "@/components/landing/LandingTracker";
 import { Reveal } from "@/components/landing/Reveal";
 import { StickyCta } from "@/components/landing/StickyCta";
 import { VideoFacade } from "@/components/landing/VideoFacade";
+import Image from "next/image";
 import {
   ABOUT,
   ACCESS_EXPLAINER,
@@ -41,15 +42,14 @@ export default function HomePage() {
           <span className="hero-overlay" />
         </div>
         <header className="hero-header" aria-label="Site owner">
-          <span className="logo-lockup">
-            <svg viewBox="0 0 28 28" width="26" height="26" aria-hidden="true">
-              <path
-                d="M14 2c6.6 0 12 5.4 12 12s-5.4 12-12 12S2 20.6 2 14 7.4 2 14 2Zm0 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Z"
-                fill="var(--color-brand)"
-              />
-              <circle cx="14" cy="14" r="4" fill="var(--color-brand-accent)" />
-            </svg>
-            <span className="logo-word">ICREATIT BRAND</span>
+          <span className="logo-plate">
+            <Image
+              src="/brand/logo.png"
+              alt="Icreatit Brand"
+              width={249}
+              height={38}
+              priority
+            />
           </span>
         </header>
         <div className="hero-copy">
@@ -130,12 +130,14 @@ export default function HomePage() {
           <p className="kicker">Meet your teacher</p>
           <h2>Meet the CEO</h2>
           <div className="ceo-card">
-            <div className="ceo-photo" aria-hidden="true">
-              {/* PLACEHOLDER: swap for the CEO photo asset */}
-              <svg viewBox="0 0 96 96" width="84" height="84">
-                <circle cx="48" cy="30" r="18" fill="var(--color-brand)" opacity="0.85" />
-                <path d="M16 88c4-22 18-30 32-30s28 8 32 30Z" fill="var(--color-brand)" opacity="0.6" />
-              </svg>
+            <div className="ceo-photo">
+              <Image
+                src="/brand/ceo.jpg"
+                alt={`${CEO.name}, ${CEO.title}`}
+                width={336}
+                height={420}
+                sizes="(min-width: 640px) 180px, 96px"
+              />
             </div>
             <div>
               <p className="ceo-name">{CEO.name}</p>
@@ -251,7 +253,14 @@ export default function HomePage() {
       <footer className="site-footer" aria-label="Footer">
         <div className="section-inner footer-grid">
           <div>
-            <p className="logo-word">ICREATIT BRAND LIMITED</p>
+            <span className="logo-plate">
+              <Image
+                src="/brand/logo.png"
+                alt="Icreatit Brand Limited"
+                width={199}
+                height={30}
+              />
+            </span>
             <p className="footer-contact">
               <a href={`mailto:${FOOTER.contactEmail}`}>{FOOTER.contactEmail}</a>
             </p>
