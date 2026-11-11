@@ -98,6 +98,8 @@ button:focus-visible {
 .check-row {
   display: flex;
   align-items: flex-start;
+  flex-wrap: wrap;
+  row-gap: 0.5rem;
   gap: 0.75rem;
   padding: 0.75rem 0;
 }
@@ -292,6 +294,16 @@ button:focus-visible {
   border-radius: 0.75rem;
   overflow: hidden;
 }
+/* The YT.Player API replaces the styled mount div with a fixed-size iframe;
+   force it back to the card width so embeds never overflow the card. */
+.video-module iframe {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 0 0 0.75rem 0.75rem;
+}
 .video-module:first-of-type {
   margin-top: 0;
 }
@@ -338,13 +350,24 @@ button:focus-visible {
 .paid-item {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.75rem;
   padding: 0.75rem;
   border: 1px solid #e5e7eb;
   border-radius: 0.75rem;
 }
+/* Mobile: stack text and button so nowrap chips never squeeze the copy. */
+.paid-item .chip-btn {
+  flex: 1 1 100%;
+  justify-content: center;
+}
 .paid-item-locked {
   background: var(--color-surface-alt);
+}
+@media (min-width: 640px) {
+  .paid-item .chip-btn {
+    flex: 0 0 auto;
+  }
 }
 
 .pay-modal-backdrop {

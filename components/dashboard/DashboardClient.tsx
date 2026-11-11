@@ -530,7 +530,8 @@ function ReferralCard(props: {
         </button>
       </div>
 
-      <div className="grid grid-cols-5 gap-2">
+      {/* auto-fit so buttons never crush below their label width on small phones */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(88px,1fr))] gap-2">
         <ShareBtn label="WhatsApp" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(bareLinkText(referralLink))}`, "_blank", "noopener")} />
         <ShareBtn label="Telegram" onClick={() => window.open(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}`, "_blank", "noopener")} />
         <ShareBtn label="X" onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(fillShareMessage(SHARE_MESSAGES[1]?.text.replace("{name}", name), name, referralLink))}`, "_blank", "noopener")} />
