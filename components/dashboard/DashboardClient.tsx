@@ -85,7 +85,6 @@ export function DashboardClient() {
   const recordWhatsappClick = useMutation(api.dashboard.recordWhatsappClick);
   const recordVideo1Started = useMutation(api.dashboard.recordVideo1Started);
   const recordVideo2Engaged = useMutation(api.dashboard.recordVideo2Engaged);
-  const setAvatar = useMutation(api.dashboard.setAvatar);
   const initializePayment = useAction(api.payments.initializePayment);
   const startGuideDownload = useMutation(api.files.startGuideDownload);
   const startPaidBookDownload = useMutation(api.files.startPaidBookDownload);
@@ -281,7 +280,7 @@ export function DashboardClient() {
   }
 
   return (    <div className="mx-auto flex min-h-dvh max-w-xl flex-col px-4 pb-28 pt-8">
-      <WelcomeHeader data={data} onSetAvatar={(id) => void setAvatar({ avatarId: id })} />
+      <WelcomeHeader data={data} />
 
       <UnlockChecklist data={data} clickWhatsapp={clickWhatsapp} />
 
@@ -332,7 +331,7 @@ export function DashboardClient() {
         </p>
         <button
           type="button"
-          className="underline"
+          className="logout-btn"
           onClick={async () => {
             await signOut();
             router.replace("/login");
@@ -384,11 +383,7 @@ function initialsOf(first: string, surname: string): string {
   return `${a}${b}`;
 }
 
-function WelcomeHeader(props: {
-  data: DashboardData;
-  onSetAvatar: (id: string) => void;
-}) {
-  const { data } = props;
+function WelcomeHeader({ data }: { data: DashboardData }) {
   const color = AVATAR_COLORS[data.avatarId] ?? AVATAR_COLORS.auto;
   return (
     <header className="mb-6">
@@ -408,21 +403,6 @@ function WelcomeHeader(props: {
         </div>
       </div>
       <p className="mb-2 text-sm text-ink-soft">{data.nextGoal.text}</p>
-      <div className="flex items-center gap-2" aria-label="Choose your avatar colour">
-        <span className="text-xs text-ink-soft">Avatar colour:</span>
-        {(["auto", "sage", "slate", "amber", "rose", "sky", "violet"] as const).map((id) => (
-          <button
-            key={id}
-            type="button"
-            aria-label={`Set avatar colour ${id}`}
-            className={`h-6 w-6 rounded-full border-2 ${
-              data.avatarId === id ? "border-ink" : "border-transparent"
-            }`}
-            style={{ backgroundColor: AVATAR_COLORS[id] }}
-            onClick={props.onSetAvatar.bind(null, id)}
-          />
-        ))}
-      </div>
     </header>
   );
 }
@@ -509,11 +489,6 @@ function ReferralCard(props: {
     }
   }
 
-  const filled = SHARE_MESSAGES.map((m) => ({
-    ...m,
-    text: fillShareMessage(m.text.replace("{name}", name), name, referralLink),
-  }));
-
   return (
     <section className="card" aria-label="Your referral link">
       <h2 className="card-title">Your referral link</h2>
@@ -542,27 +517,6 @@ function ReferralCard(props: {
             location.href = `sms:?body=${encodeURIComponent(bareLinkText(referralLink))}`;
           }}
         />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <p className="text-sm font-semibold">Ready-made messages</p>
-        {filled.map((m) => (
-          <div key={m.id} className="rounded-lg border border-slate-200 p-3">
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                {m.label}
-              </span>
-              <button
-                type="button"
-                className="chip-btn"
-                onClick={() => void copy(m.text, m.label.toLowerCase())}
-              >
-                Copy
-              </button>
-            </div>
-            <p className="text-sm text-ink-soft">{m.text}</p>
-          </div>
-        ))}
       </div>
     </section>
   );
@@ -607,13 +561,12 @@ function VideoModule(props: {
         ) : null}
       </div>
       {props.unlocked ? (
-        videoId ? (
-          <div id={`yt-${props.id}`} />
-        ) : (
+        <div className="locked-video-placeholder">
+          <p className="font-semibold">Coming shortly</p>
           <p className="text-sm text-ink-soft">
-            The video link will be published shortly. You are all set.
+            Module {props.index} is being prepared for this dashboard. You are all set.
           </p>
-        )
+        </div>
       ) : (
         <div className="locked-video-placeholder">
           <p className="font-semibold">Locked</p>

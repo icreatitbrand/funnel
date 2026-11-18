@@ -182,6 +182,24 @@ button:focus-visible {
   color: var(--color-brand);
 }
 
+.logout-btn {
+  min-height: 44px;
+  padding: 0 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: var(--color-ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.logout-btn:active {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
 /* Liquid-fill progress vessel (PRD 7.2): transform/opacity only */
 .vessel {
   position: relative;
