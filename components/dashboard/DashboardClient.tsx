@@ -390,7 +390,7 @@ function WelcomeHeader({ data }: { data: DashboardData }) {
       <div className="mb-4 flex items-center gap-3">
         <span
           aria-label="Your avatar"
-          className="grid h-12 w-12 place-items-center rounded-full text-sm font-bold text-white"
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-full border-2 border-brand text-sm font-bold text-white shadow-md"
           style={{ backgroundColor: color }}
         >
           {initialsOf(data.firstName, data.surname)}
