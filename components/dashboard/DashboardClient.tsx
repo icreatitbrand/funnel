@@ -279,8 +279,11 @@ export function DashboardClient() {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  return (    <div className="mx-auto flex min-h-dvh max-w-xl flex-col px-4 pb-28 pt-8">
+  return (
+    <div className="dash mx-auto flex min-h-dvh max-w-xl flex-col px-4 pb-28 pt-8">
       <WelcomeHeader data={data} />
+
+      <VideoCourseSection data={data} onStarted={() => void recordVideo1Started()} onEngaged={() => void recordVideo2Engaged()} />
 
       <UnlockChecklist data={data} clickWhatsapp={clickWhatsapp} />
 
@@ -291,11 +294,20 @@ export function DashboardClient() {
         name={data.firstName}
       />
 
-      <VideoCourseSection data={data} onStarted={() => void recordVideo1Started()} onEngaged={() => void recordVideo2Engaged()} />
-
-      <FreeGuideCard data={data} onToast={setToast} onDownload={() => downloadFile("guide", data.pdfUnlocked, "Reach 3 valid referrals to unlock the guide.")} />
-
       <ProgressTracker data={data} />
+
+      <div className="tile-pair">
+        <FreeGuideCard data={data} onToast={setToast} onDownload={() => downloadFile("guide", data.pdfUnlocked, "Reach 3 valid referrals to unlock the guide.")} />
+
+        <Rewards
+          data={data}
+          onToast={setToast}
+          booking={myBooking}
+          onBook={(slot) => bookCall({ requestedFor: slot })}
+          onCancel={(bookingId) => cancelCall({ bookingId: bookingId as BookingId })}
+          onOpen={() => void recordBookingOpen()}
+        />
+      </div>
 
       {data.video2Engaged && (
         <PaymentSection
@@ -310,15 +322,6 @@ export function DashboardClient() {
           }
         />
       )}
-
-      <Rewards
-        data={data}
-        onToast={setToast}
-        booking={myBooking}
-        onBook={(slot) => bookCall({ requestedFor: slot })}
-        onCancel={(bookingId) => cancelCall({ bookingId: bookingId as BookingId })}
-        onOpen={() => void recordBookingOpen()}
-      />
 
       <ReferralsList referrals={data.referrals} />
 
@@ -549,37 +552,41 @@ function VideoModule(props: {
     props.isSecond ? props.onEngaged : () => {},
   );
 
+  const media = !props.unlocked ? (
+    <div className="locked-video-placeholder">
+      <p className="font-semibold">Locked</p>
+      <p className="text-sm text-ink-soft">
+        Complete the two unlock steps above to watch.
+      </p>
+    </div>
+  ) : videoId ? (
+    <div id={`yt-${props.id}`} className="video-embed" />
+  ) : (
+    <div className="locked-video-placeholder">
+      <div className="video-placeholder-art" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M8 5.5v13l11-6.5z" />
+        </svg>
+      </div>
+      <p className="font-semibold">Coming shortly</p>
+      <p className="text-sm text-ink-soft">
+        Module {props.index} is being prepared for this dashboard. You are all set.
+      </p>
+    </div>
+  );
+
   return (
     <div
       id={props.id}
       className={`video-module ${props.unlocked ? "" : "frosted"}`}
     >
-      <div className="mb-2 flex items-center justify-between gap-2">
+      {media}
+      <div className="video-module-head">
         <h3 className="font-semibold">Module {props.index}: {props.title}</h3>
         {props.isSecond && props.engaged ? (
           <span className="rounded-full bg-brand px-2 py-0.5 text-xs text-white">Watched</span>
         ) : null}
       </div>
-      {props.unlocked ? (
-        <div className="locked-video-placeholder">
-          <div className="video-placeholder-art" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M8 5.5v13l11-6.5z" />
-            </svg>
-          </div>
-          <p className="font-semibold">Coming shortly</p>
-          <p className="text-sm text-ink-soft">
-            Module {props.index} is being prepared for this dashboard. You are all set.
-          </p>
-        </div>
-      ) : (
-        <div className="locked-video-placeholder">
-          <p className="font-semibold">Locked</p>
-          <p className="text-sm text-ink-soft">
-            Complete the two unlock steps above to watch.
-          </p>
-        </div>
-      )}
     </div>
   );
 }
@@ -591,40 +598,40 @@ function VideoCourseSection(props: {
 }) {
   const { data, onStarted, onEngaged } = props;
   return (
-    <section className="card" aria-label="Video course">
+    <section className="video-section" aria-label="Video course">
       <h2 className="card-title">The free course (about 20 minutes)</h2>
+      <div className="video-rail">
+        <VideoModule
+          id="module-1"
+          index={1}
+          title="Using AI for your business and marketing on social media"
+          youtubeUrl={data.video1YoutubeUrl}
+          unlocked={data.videosUnlocked}
+          onStarted={onStarted}
+          onEngaged={onEngaged}
+          isSecond={false}
+          engaged={false}
+        />
+        <VideoModule
+          id="module-2"
+          index={2}
+          title="How to raise funds & win business grants"
+          youtubeUrl={data.video2YoutubeUrl}
+          unlocked={data.videosUnlocked}
+          onStarted={() => {}}
+          onEngaged={onEngaged}
+          isSecond
+          engaged={data.video2Engaged}
+        />
+      </div>
       {data.videosUnlocked ? (
-        <>
-          <VideoModule
-            id="module-1"
-            index={1}
-            title="Using AI for your business and marketing on social media"
-            youtubeUrl={data.video1YoutubeUrl}
-            unlocked
-            onStarted={onStarted}
-            onEngaged={onEngaged}
-            isSecond={false}
-            engaged={false}
-          />
-          <VideoModule
-            id="module-2"
-            index={2}
-            title="How to raise funds & win business grants"
-            youtubeUrl={data.video2YoutubeUrl}
-            unlocked
-            onStarted={() => {}}
-            onEngaged={onEngaged}
-            isSecond
-            engaged={data.video2Engaged}
-          />
-          {!data.video2Engaged && (
-            <p className="text-sm text-ink-soft">
-              Watch module 2 to the halfway point to open the next section.
-            </p>
-          )}
-        </>
+        !data.video2Engaged && (
+          <p className="mt-3 text-sm text-ink-soft">
+            Watch module 2 to the halfway point to open the next section.
+          </p>
+        )
       ) : (
-        <div className="locked-video-placeholder">
+        <div className="mt-3">
           <p className="font-semibold">Video course locked</p>
           <p className="text-sm text-ink-soft">
             Send the CEO's WhatsApp message and refer 1 friend to unlock both
@@ -673,7 +680,7 @@ function ProgressTracker({ data }: { data: DashboardData }) {
   const pct = Math.min(100, (data.validReferralCount / 10) * 100);
   const stage = data.validReferralCount >= 10 ? "Scaler unlocked" : `${10 - data.validReferralCount} to go`;
   return (
-    <section className="card" aria-label="Progress">
+    <section className="card journey-card" aria-label="Progress">
       <h2 className="card-title">Your journey</h2>
       <div className="vessel" role="img" aria-label={`Liquid progress: ${data.validReferralCount} of 10 valid referrals. ${stage}.`}>
         <div className="vessel-fill" style={{ height: `${pct}%` }}>
@@ -685,8 +692,8 @@ function ProgressTracker({ data }: { data: DashboardData }) {
           { n: 1, label: "Video modules" },
           { n: 3, label: "Free guide" },
           { n: 10, label: "CEO call" },
-        ].map((m) => (
-          <li key={m.n} className={`rounded-lg border p-2 ${data.validReferralCount >= m.n ? "border-brand text-brand font-semibold" : "border-slate-200 text-ink-soft"}`}>
+        ].map((m, i) => (
+          <li key={m.n} className={`milestone-tile milestone-tile-${i} ${data.validReferralCount >= m.n ? "milestone-tile-done font-semibold" : "text-ink-soft"}`}>
             {m.n} referrals - {m.label}
           </li>
         ))}

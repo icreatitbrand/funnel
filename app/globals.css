@@ -1176,3 +1176,121 @@ button:focus-visible {
   }
 }
 
+
+/* ------------------ Dashboard layout (mobile-app card style) ------------------ */
+/* Soft tints derive from the brand tokens so the @theme block stays the single
+   place to change colours. */
+
+.dash .card {
+  border-radius: 1.5rem;
+  border-color: transparent;
+  box-shadow: 0 10px 30px rgba(16, 24, 40, 0.07);
+}
+
+/* Video course: horizontal snap rail on phones, two columns on wider screens. */
+.video-section {
+  margin-bottom: 1.5rem;
+}
+.video-rail {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  margin: 0 -1rem;
+  padding: 0 1rem 0.5rem;
+  scrollbar-width: none;
+}
+.video-rail::-webkit-scrollbar {
+  display: none;
+}
+.video-rail > .video-module {
+  flex: 0 0 82%;
+  scroll-snap-align: start;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 0;
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 30px rgba(16, 24, 40, 0.07);
+}
+.video-rail .video-embed {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--color-ink);
+}
+.video-rail .video-module iframe {
+  border-radius: 0;
+}
+.video-rail .locked-video-placeholder {
+  flex: 1;
+  min-height: 11rem;
+}
+.video-module-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem 1rem;
+}
+@media (min-width: 640px) {
+  .video-rail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: visible;
+    margin: 0;
+    padding: 0;
+  }
+  .video-rail > .video-module {
+    flex: none;
+  }
+}
+
+/* Journey card: tinted panel with three pastel milestone tiles. */
+.journey-card {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--color-brand-accent) 8%, white),
+    color-mix(in srgb, var(--color-brand) 8%, white)
+  );
+}
+.milestone-tile {
+  border-radius: 1rem;
+  padding: 0.75rem 0.5rem;
+  border: 1px solid transparent;
+}
+.milestone-tile-0 {
+  background: color-mix(in srgb, var(--color-brand-accent) 12%, white);
+}
+.milestone-tile-1 {
+  background: color-mix(in srgb, var(--color-brand) 12%, white);
+}
+.milestone-tile-2 {
+  background: color-mix(in srgb, var(--color-brand-dark) 14%, white);
+}
+.milestone-tile-done {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+/* Free guide + CEO call sit side by side as a tile pair. */
+.tile-pair {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.tile-pair .card {
+  margin-bottom: 0;
+  height: 100%;
+}
+.tile-pair > section:not(.card) {
+  display: flex;
+}
+.tile-pair > section:not(.card) > .card {
+  flex: 1;
+}
+@media (min-width: 640px) {
+  .tile-pair {
+    grid-template-columns: 1fr 1fr;
+  }
+}
