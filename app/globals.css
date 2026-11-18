@@ -171,8 +171,11 @@ button:focus-visible {
 }
 
 .share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 44px;
-  border-radius: 0.75rem;
+  border-radius: 9999px;
   border: 1px solid #cbd5e1;
   background: #fff;
   font-size: 0.8125rem;
