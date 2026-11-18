@@ -562,6 +562,11 @@ function VideoModule(props: {
       </div>
       {props.unlocked ? (
         <div className="locked-video-placeholder">
+          <div className="video-placeholder-art" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M8 5.5v13l11-6.5z" />
+            </svg>
+          </div>
           <p className="font-semibold">Coming shortly</p>
           <p className="text-sm text-ink-soft">
             Module {props.index} is being prepared for this dashboard. You are all set.
