@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { Reveal } from "@/components/landing/Reveal";
 import { bareLinkText, fillShareMessage, SHARE_MESSAGES } from "@/lib/share";
 import { useYouTubeProgress, youtubeIdFromUrl } from "./useYouTubeProgress";
 
@@ -283,47 +284,61 @@ export function DashboardClient() {
     <div className="dash mx-auto flex min-h-dvh max-w-xl flex-col px-4 pb-28 pt-8">
       <WelcomeHeader data={data} />
 
-      <VideoCourseSection data={data} onStarted={() => void recordVideo1Started()} onEngaged={() => void recordVideo2Engaged()} />
+      <Reveal delay={60}>
+        <VideoCourseSection data={data} onStarted={() => void recordVideo1Started()} onEngaged={() => void recordVideo2Engaged()} />
+      </Reveal>
 
-      <UnlockChecklist data={data} clickWhatsapp={clickWhatsapp} />
+      <Reveal delay={90}>
+        <UnlockChecklist data={data} clickWhatsapp={clickWhatsapp} />
+      </Reveal>
 
-      <ReferralCard
-        data={data}
-        referralLink={referralLink}
-        onToast={setToast}
-        name={data.firstName}
-      />
-
-      <ProgressTracker data={data} />
-
-      <div className="tile-pair">
-        <FreeGuideCard data={data} onToast={setToast} onDownload={() => downloadFile("guide", data.pdfUnlocked, "Reach 3 valid referrals to unlock the guide.")} />
-
-        <Rewards
+      <Reveal>
+        <ReferralCard
           data={data}
+          referralLink={referralLink}
           onToast={setToast}
-          booking={myBooking}
-          onBook={(slot) => bookCall({ requestedFor: slot })}
-          onCancel={(bookingId) => cancelCall({ bookingId: bookingId as BookingId })}
-          onOpen={() => void recordBookingOpen()}
+          name={data.firstName}
         />
-      </div>
+      </Reveal>
+
+      <Reveal>
+        <ProgressTracker data={data} />
+      </Reveal>
+
+      <Reveal>
+        <div className="tile-pair">
+          <FreeGuideCard data={data} onToast={setToast} onDownload={() => downloadFile("guide", data.pdfUnlocked, "Reach 3 valid referrals to unlock the guide.")} />
+
+          <Rewards
+            data={data}
+            onToast={setToast}
+            booking={myBooking}
+            onBook={(slot) => bookCall({ requestedFor: slot })}
+            onCancel={(bookingId) => cancelCall({ bookingId: bookingId as BookingId })}
+            onOpen={() => void recordBookingOpen()}
+          />
+        </div>
+      </Reveal>
 
       {data.video2Engaged && (
-        <PaymentSection
-          data={data}
-          onPauseModal={() => setPayModalOpen(true)}
-          payModalOpen={payModalOpen}
-          setPayModalOpen={setPayModalOpen}
-          startPayment={startPayment}
-          joinPaidGroup={joinPaidGroup}
-          onDownloadBook={() =>
-            downloadFile("book", data.paidPdfUnlocked, "The book unlocks after a verified payment.")
-          }
-        />
+        <Reveal>
+          <PaymentSection
+            data={data}
+            onPauseModal={() => setPayModalOpen(true)}
+            payModalOpen={payModalOpen}
+            setPayModalOpen={setPayModalOpen}
+            startPayment={startPayment}
+            joinPaidGroup={joinPaidGroup}
+            onDownloadBook={() =>
+              downloadFile("book", data.paidPdfUnlocked, "The book unlocks after a verified payment.")
+            }
+          />
+        </Reveal>
       )}
 
-      <ReferralsList referrals={data.referrals} />
+      <Reveal>
+        <ReferralsList referrals={data.referrals} />
+      </Reveal>
 
       <footer className="mt-10 flex flex-col items-center gap-3 border-t border-slate-200 pt-6 text-sm">
         <p className="text-ink-soft">
@@ -389,23 +404,23 @@ function initialsOf(first: string, surname: string): string {
 function WelcomeHeader({ data }: { data: DashboardData }) {
   const color = AVATAR_COLORS[data.avatarId] ?? AVATAR_COLORS.auto;
   return (
-    <header className="mb-6">
+    <header className="dash-hero">
       <div className="mb-4 flex items-center gap-3">
         <span
           aria-label="Your avatar"
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-full border-2 border-brand text-sm font-bold text-white shadow-md"
+          className="dash-avatar grid h-12 w-12 shrink-0 place-items-center rounded-full text-sm font-bold text-white"
           style={{ backgroundColor: color }}
         >
           {initialsOf(data.firstName, data.surname)}
         </span>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">
+          <p className="dash-level text-xs font-semibold uppercase tracking-[0.2em]">
             {data.level}
           </p>
           <h1 className="text-2xl font-bold">Welcome, {data.firstName}</h1>
         </div>
       </div>
-      <p className="mb-2 text-sm text-ink-soft">{data.nextGoal.text}</p>
+      <p className="dash-goal text-sm">{data.nextGoal.text}</p>
     </header>
   );
 }
@@ -678,12 +693,18 @@ function FreeGuideCard(props: {
 
 function ProgressTracker({ data }: { data: DashboardData }) {
   const pct = Math.min(100, (data.validReferralCount / 10) * 100);
+  // Fill rises from empty on mount and eases to each new value (CSS transition).
+  const [shownPct, setShownPct] = useState(0);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setShownPct(pct));
+    return () => cancelAnimationFrame(id);
+  }, [pct]);
   const stage = data.validReferralCount >= 10 ? "Scaler unlocked" : `${10 - data.validReferralCount} to go`;
   return (
     <section className="card journey-card" aria-label="Progress">
       <h2 className="card-title">Your journey</h2>
       <div className="vessel" role="img" aria-label={`Liquid progress: ${data.validReferralCount} of 10 valid referrals. ${stage}.`}>
-        <div className="vessel-fill" style={{ height: `${pct}%` }}>
+        <div className="vessel-fill" style={{ height: `${shownPct}%` }}>
           <span className="vessel-wave" aria-hidden="true" />
         </div>
       </div>
