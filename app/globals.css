@@ -72,10 +72,11 @@ button:focus-visible {
 
 .card {
   border: 1px solid #e5e7eb;
-  border-radius: 1rem;
+  border-radius: 1.25rem;
   padding: 1.25rem;
   margin-bottom: 1.25rem;
   background-color: var(--color-surface);
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
 }
 
 .card-title {
@@ -135,9 +136,10 @@ button:focus-visible {
 .chip-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   min-height: 44px;
-  border-radius: 0.75rem;
+  border-radius: 9999px;
   background-color: var(--color-brand);
   color: #fff;
   font-size: 0.875rem;
@@ -353,6 +355,7 @@ button:focus-visible {
   background: linear-gradient(120deg, #1e40af, #2563eb 45%, #3b82f6 75%, #2563eb);
   background-size: 220% 100%;
   animation: pay-sheen 4s ease-in-out infinite;
+  border-radius: 9999px;
   box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
 }
 @keyframes pay-sheen {
