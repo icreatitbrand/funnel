@@ -1177,231 +1177,381 @@ button:focus-visible {
 }
 
 
-/* ------------------ Dashboard layout (mobile-app card style) ------------------ */
-/* Soft tints derive from the brand tokens so the @theme block stays the single
-   place to change colours. */
+/* ------------------ Dashboard: techy minimal, glossy creamy white ------------------ */
+/* One continuous sheet instead of stacked cards. Red + blue come only from the
+   brand tokens; cream and gloss come from soft gradients and inner highlights. */
 
-.dash .card {
-  border-radius: 1.5rem;
-  border-color: transparent;
-  box-shadow: 0 10px 30px rgba(16, 24, 40, 0.07);
+.dash-page {
+  min-height: 100dvh;
+  background:
+    radial-gradient(60% 38% at 100% 0%, rgba(37, 99, 235, 0.12), transparent 70%),
+    radial-gradient(50% 34% at 0% 100%, rgba(220, 38, 38, 0.08), transparent 70%),
+    linear-gradient(180deg, #fffdf9, #f9f5ee);
 }
 
-/* Video course: horizontal snap rail on phones, two columns on wider screens. */
-.video-section {
-  margin-bottom: 1.5rem;
+.dash-sheet {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.75rem;
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 251, 244, 0.88));
+  backdrop-filter: blur(12px);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 24px 60px rgba(13, 36, 84, 0.09);
 }
-.video-rail {
+/* Thin blue-to-red hairline across the top: the one techy accent. */
+.dash-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-brand), var(--color-brand) 55%, var(--color-brand-accent));
+  z-index: 1;
+}
+
+/* Welcome: plain white. */
+.dash-hero {
   display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1.5rem 1.25rem 1.25rem;
+  background: #fff;
+}
+.dash-avatar {
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px var(--color-brand-accent);
+}
+.dash-level {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-brand-accent);
+}
+
+/* Sections are separated by hairlines, not boxed. */
+.dash-block {
+  padding: 1.25rem;
+  border-top: 1px solid rgba(16, 24, 40, 0.07);
+}
+.dash-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+}
+.dash-label::before {
+  content: "";
+  width: 14px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-brand-accent);
+}
+.dash-note {
+  font-size: 0.8125rem;
+  color: var(--color-ink-soft);
+}
+
+/* Rows (guide / call / step) */
+.dash-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
+  padding: 0.875rem 0;
+  border-top: 1px solid rgba(16, 24, 40, 0.07);
+}
+.dash-row-first {
+  border-top: 0;
+  padding-top: 0;
+}
+.dash-block > .dash-row:last-child {
+  padding-bottom: 0;
+}
+.dash-row .dash-label {
+  margin-bottom: 0.15rem;
+}
+.dash-row-col {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+.lock-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(16, 24, 40, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--color-ink-soft);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Glossy buttons */
+.dash .chip-btn {
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #3b82f6, var(--color-brand));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 6px 16px rgba(37, 99, 235, 0.28);
+  transition: transform 160ms ease, box-shadow 200ms ease;
+}
+.dash .chip-btn-primary {
+  background: linear-gradient(180deg, #ef4444, var(--color-brand-accent));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 6px 16px rgba(220, 38, 38, 0.26);
+}
+.dash .chip-btn-ghost {
+  background: #fff;
+  color: var(--color-brand);
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  box-shadow: none;
+}
+.dash .chip-btn:active {
+  transform: scale(0.97);
+}
+
+/* Referral link */
+.ref-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.625rem 0.625rem 0.875rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  background: linear-gradient(180deg, #fff, #fbf8f2);
+  box-shadow: inset 0 1px 0 #fff;
+}
+.ref-box code {
+  flex: 1;
   overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  margin: 0 -1rem;
-  padding: 0 1rem 0.5rem;
+  white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  color: var(--color-ink);
   scrollbar-width: none;
 }
-.video-rail::-webkit-scrollbar {
+.ref-box code::-webkit-scrollbar {
   display: none;
 }
-.video-rail > .video-module {
-  flex: 0 0 82%;
-  scroll-snap-align: start;
-  margin-top: 0;
+
+/* Videos: stacked, thumbnail under a translucent veil until unlocked. */
+.video-stack {
   display: flex;
   flex-direction: column;
-  background: var(--color-surface);
-  border: 0;
-  border-radius: 1.5rem;
-  box-shadow: 0 10px 30px rgba(16, 24, 40, 0.07);
+  gap: 1.25rem;
 }
-.video-rail .video-embed {
-  width: 100%;
+.video-frame {
+  position: relative;
   aspect-ratio: 16 / 9;
-  background: var(--color-ink);
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(37, 99, 235, 0.14);
+  background: #0d2454;
+  box-shadow: 0 14px 34px rgba(13, 36, 84, 0.16);
 }
-.video-rail .video-module iframe {
-  border-radius: 0;
+.video-thumb {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-image: linear-gradient(150deg, #0d2454, var(--color-brand-dark) 55%, var(--color-brand));
 }
-.video-rail .locked-video-placeholder {
-  flex: 1;
-  min-height: 11rem;
+.video-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(60% 70% at 85% 0%, rgba(220, 38, 38, 0.28), transparent 70%);
+}
+.video-embed {
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+.video-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.video-soon {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 600;
+}
+.video-veil {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.62), rgba(255, 249, 238, 0.5));
+  backdrop-filter: blur(7px) saturate(1.15);
+  color: var(--color-ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: opacity 600ms cubic-bezier(0.22, 1, 0.36, 1), visibility 600ms;
+}
+.video-veil-open {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.veil-lock {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(13, 36, 84, 0.18);
+}
+.veil-lock svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: var(--color-brand);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .video-module-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.875rem 1rem 1rem;
+  padding-top: 0.625rem;
+  font-size: 0.9375rem;
 }
-@media (min-width: 640px) {
-  .video-rail {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    overflow: visible;
-    margin: 0;
-    padding: 0;
-  }
-  .video-rail > .video-module {
-    flex: none;
-  }
+.watched-badge {
+  flex: none;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-brand);
+  color: #fff;
+  font-size: 0.75rem;
 }
 
-/* Journey card: landing-page navy band with white milestone tiles. */
-.journey-card {
-  background: linear-gradient(160deg, #0d2454, var(--color-brand-dark) 60%, #0f2f66);
-  color: #fff;
-}
-.journey-card .card-title {
-  color: #fff;
-}
-.journey-card .vessel {
-  border-color: rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.1);
-}
-.milestone-tile {
-  border-radius: 1rem;
-  padding: 0.75rem 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
-  transition: background-color 300ms ease, color 300ms ease, transform 300ms ease;
-}
-.milestone-tile-done {
-  background: #fff;
-  color: var(--color-brand-dark);
-  border-color: #fff;
-  border-bottom: 3px solid var(--color-brand-accent);
-  transform: translateY(-2px);
-}
-
-/* Hero band (same navy gradient as the landing hero) behind the Welcome header. */
-.dash-hero {
-  margin-bottom: 1.5rem;
-  padding: 1.25rem;
-  border-radius: 1.5rem;
-  background: linear-gradient(160deg, #0d2454, var(--color-brand-dark) 55%, #0f2f66);
-  color: #fff;
-  box-shadow: 0 14px 34px rgba(13, 36, 84, 0.28);
-  border-bottom: 4px solid var(--color-brand-accent);
-}
-.dash-hero > div {
+/* Journey: one progress bar and a number. */
+.journey-head {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.journey-head .dash-label {
   margin-bottom: 0.75rem;
 }
-.dash-hero h1 {
-  color: #fff;
+.journey-count {
+  font-size: 0.8125rem;
+  color: var(--color-ink-soft);
 }
-.dash-level {
-  color: #fca5a5; /* soft red, readable on navy */
+.journey-count strong {
+  font-size: 1.25rem;
+  color: var(--color-ink);
 }
-.dash-goal {
-  color: rgba(255, 255, 255, 0.85);
+.bar {
+  position: relative;
+  height: 10px;
+  border-radius: 9999px;
+  background: rgba(37, 99, 235, 0.1);
+  box-shadow: inset 0 1px 2px rgba(13, 36, 84, 0.12);
 }
-.dash-avatar {
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 3px var(--color-brand-accent);
-}
-
-/* Section titles: small red accent bar, as on the landing kickers. */
-.dash .card-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.dash .card-title::before {
-  content: "";
-  width: 4px;
-  height: 1.1em;
-  border-radius: 2px;
-  background: var(--color-brand-accent);
-}
-
-/* Locked / placeholder video media uses the landing navy gradient. */
-.video-rail .locked-video-placeholder {
-  background: linear-gradient(160deg, #0d2454, var(--color-brand-dark) 60%, #0f2f66);
-  color: #fff;
-}
-.video-rail .locked-video-placeholder p {
-  color: #fff;
-}
-.video-rail .locked-video-placeholder p + p {
-  color: rgba(255, 255, 255, 0.82);
-}
-.video-rail > .video-module {
-  border-bottom: 3px solid var(--color-brand);
-  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms ease;
-}
-.video-rail > .video-module:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 36px rgba(13, 36, 84, 0.16);
-}
-
-/* Gentle card lift on hover/focus; tile pair gets blue and red top edges. */
-.dash .card {
-  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms ease;
-}
-.dash .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 34px rgba(13, 36, 84, 0.12);
-}
-.dash .journey-card:hover {
-  box-shadow: 0 14px 34px rgba(13, 36, 84, 0.3);
-}
-
-/* Free guide + CEO call sit side by side as a tile pair. */
-.tile-pair {
-  display: grid;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-}
-.tile-pair .card {
-  margin-bottom: 0;
+.bar-fill {
+  position: relative;
   height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-brand), #3b82f6 65%, var(--color-brand-accent));
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+  transition: width 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
 }
-.tile-pair > section:not(.card) {
-  display: flex;
+.bar-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 50% 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
 }
-.tile-pair > section:not(.card) > .card {
-  flex: 1;
-}
-@media (min-width: 640px) {
-  .tile-pair {
-    grid-template-columns: 1fr 1fr;
-  }
+.bar-tick {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 16px;
+  border-radius: 1px;
+  background: rgba(16, 24, 40, 0.18);
 }
 
-.tile-pair > section.card {
-  border-top: 4px solid var(--color-brand);
+/* Paid packages: plain list items, no boxes. */
+.dash .paid-item {
+  border: 0;
+  border-top: 1px solid rgba(16, 24, 40, 0.07);
+  border-radius: 0;
+  padding: 0.75rem 0;
+  background: transparent;
 }
-.tile-pair > section:not(.card) > .card {
-  border-top: 4px solid var(--color-brand-accent);
+.dash .paid-item-locked {
+  background: transparent;
 }
-.dash .chip-btn,
-.dash .share-btn,
-.dash .btn-primary {
-  transition: transform 160ms ease, background-color 200ms ease;
+
+.dash-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 0 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-ink-soft);
 }
-.dash .chip-btn:active,
-.dash .share-btn:active,
-.dash .btn-primary:active {
-  transform: scale(0.97);
+
+/* Floating Telegram button */
+.dash-float {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 20;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(255, 253, 249, 0), rgba(255, 253, 249, 0.92) 45%);
+  pointer-events: none;
+}
+.dash-float-btn {
+  pointer-events: auto;
+  display: block;
+  width: 100%;
+  max-width: 36rem;
+  min-height: 52px;
+  margin: 0 auto;
+  border: 0;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #3b82f6, var(--color-brand) 60%, var(--color-brand-dark));
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 10px 26px rgba(37, 99, 235, 0.38),
+    0 0 0 3px rgba(255, 255, 255, 0.7);
+  transition: transform 160ms ease, box-shadow 200ms ease;
+}
+.dash-float-btn:active {
+  transform: scale(0.98);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .vessel-fill,
-  .milestone-tile,
-  .dash .card,
-  .video-rail > .video-module,
+  .bar-fill,
+  .video-veil,
   .dash .chip-btn,
-  .dash .share-btn,
-  .dash .btn-primary {
+  .dash-float-btn {
     transition: none;
-  }
-  .dash .card:hover,
-  .video-rail > .video-module:hover,
-  .milestone-tile-done {
-    transform: none;
   }
 }
