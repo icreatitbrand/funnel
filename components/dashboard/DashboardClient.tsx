@@ -62,15 +62,7 @@ interface DashboardData {
 type Level = DashboardData["level"];
 type BookingId = Id<"callBookings">;
 
-const AVATAR_COLORS: Record<string, string> = {
-  auto: "#2563eb",
-  sage: "#3b82f6",
-  slate: "#475569",
-  amber: "#dc2626",
-  rose: "#c4506b",
-  sky: "#2f7ea8",
-  violet: "#6d59b5",
-};
+const TELEGRAM_GROUP_URL = "https://t.me/+19CDFsuD4B5kMDRk";
 
 const PAID_ITEM_EXPLANATIONS = {
   pdf: "Full PDF book with every lesson and grant checklist.",
@@ -246,13 +238,7 @@ export function DashboardClient() {
   };
 
   const joinTelegram = () => {
-    if (data.telegramGroupUnlocked) {
-      joinPaidGroup("telegram");
-    } else if (data.video2Engaged) {
-      setPayModalOpen(true);
-    } else {
-      setToast("Watch module 2 to unlock the Telegram group.");
-    }
+    window.open(TELEGRAM_GROUP_URL, "_blank", "noopener");
   };
 
   return (
@@ -367,27 +353,10 @@ export function DashboardClient() {
 
 /* ---------------------------------- blocks --------------------------------- */
 
-function initialsOf(first: string, surname: string): string {
-  const a = first.trim()[0]?.toUpperCase() ?? "A";
-  const b = surname.trim()[0]?.toUpperCase() ?? "";
-  return `${a}${b}`;
-}
-
 function WelcomeHeader({ data }: { data: DashboardData }) {
-  const color = AVATAR_COLORS[data.avatarId] ?? AVATAR_COLORS.auto;
   return (
     <header className="dash-hero">
-      <span
-        aria-label="Your avatar"
-        className="dash-avatar grid h-12 w-12 shrink-0 place-items-center rounded-full text-sm font-bold text-white"
-        style={{ backgroundColor: color }}
-      >
-        {initialsOf(data.firstName, data.surname)}
-      </span>
-      <div>
-        <p className="dash-level">{data.level}</p>
-        <h1 className="text-2xl font-bold">Welcome, {data.firstName}</h1>
-      </div>
+      <h1 className="dash-welcome">Welcome, {data.firstName}</h1>
     </header>
   );
 }

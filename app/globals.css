@@ -1218,16 +1218,12 @@ button:focus-visible {
   padding: 1.5rem 1.25rem 1.25rem;
   background: #fff;
 }
-.dash-avatar {
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 2px var(--color-brand-accent);
-}
-.dash-level {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--color-brand-accent);
+.dash-welcome {
+  font-size: 2rem;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
 }
 
 /* Sections are separated by hairlines, not boxed. */
@@ -1240,9 +1236,9 @@ button:focus-visible {
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-brand);
 }
@@ -1254,7 +1250,7 @@ button:focus-visible {
   background: var(--color-brand-accent);
 }
 .dash-note {
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   color: var(--color-ink-soft);
 }
 
@@ -1291,7 +1287,7 @@ button:focus-visible {
   border: 1px solid rgba(16, 24, 40, 0.1);
   background: rgba(255, 255, 255, 0.7);
   color: var(--color-ink-soft);
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
@@ -1332,7 +1328,7 @@ button:focus-visible {
   overflow-x: auto;
   white-space: nowrap;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   color: var(--color-ink);
   scrollbar-width: none;
 }
@@ -1401,7 +1397,7 @@ button:focus-visible {
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.62), rgba(255, 249, 238, 0.5));
   backdrop-filter: blur(7px) saturate(1.15);
   color: var(--color-ink);
-  font-size: 0.8125rem;
+  font-size: 1rem;
   font-weight: 600;
   transition: opacity 600ms cubic-bezier(0.22, 1, 0.36, 1), visibility 600ms;
 }
@@ -1434,7 +1430,7 @@ button:focus-visible {
   justify-content: space-between;
   gap: 0.5rem;
   padding-top: 0.625rem;
-  font-size: 0.9375rem;
+  font-size: 1.125rem;
 }
 .watched-badge {
   flex: none;
@@ -1442,7 +1438,7 @@ button:focus-visible {
   border-radius: 9999px;
   background: var(--color-brand);
   color: #fff;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
 }
 
 /* Journey: one progress bar and a number. */
@@ -1455,11 +1451,11 @@ button:focus-visible {
   margin-bottom: 0.75rem;
 }
 .journey-count {
-  font-size: 0.8125rem;
+  font-size: 1rem;
   color: var(--color-ink-soft);
 }
 .journey-count strong {
-  font-size: 1.25rem;
+  font-size: 1.6rem;
   color: var(--color-ink);
 }
 .bar {
@@ -1511,7 +1507,7 @@ button:focus-visible {
   align-items: center;
   gap: 0.75rem;
   padding: 1.5rem 0 0.5rem;
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   color: var(--color-ink-soft);
 }
 
@@ -1535,6 +1531,7 @@ button:focus-visible {
   border-radius: 9999px;
   background: linear-gradient(180deg, #3b82f6, var(--color-brand) 60%, var(--color-brand-dark));
   color: #fff;
+  font-size: 1.125rem;
   font-weight: 700;
   cursor: pointer;
   box-shadow:
@@ -1554,4 +1551,21 @@ button:focus-visible {
   .dash-float-btn {
     transition: none;
   }
+}
+
+/* Bigger type across the dashboard (Tailwind's text-sm / text-xs are fixed rem). */
+.dash h3 {
+  font-size: 1.125rem;
+}
+.dash .text-sm {
+  font-size: 1rem;
+}
+.dash .text-xs {
+  font-size: 0.875rem;
+}
+.dash .chip-btn {
+  font-size: 1rem;
+}
+.dash .input-field {
+  font-size: 1rem;
 }
