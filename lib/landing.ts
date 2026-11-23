@@ -78,7 +78,12 @@ export const CEO = {
 
 export const ABOUT = {
   lead: "Icreatit Brand Limited helps small businesses start, register, grow and win.",
-  body: "PLACEHOLDER: who the company is, what it does and who it serves, in two or three sentences.",
+  body: [
+    "ICREATIT BRAND LIMITED is A Digital Marketing and Business Development Agency that helps SMEs build a strong brand online, make more sales and win grants. We are also help Students Entrepreneurs build a successful business while in School by providing training, resources and access to funding opportunities.",
+    "We offer services such as Business Registration, Social Media Marketing, Business Structuring and Grant Application, Branding and Design.",
+  ],
+  focus:
+    "WE ARE FOCUSED TO HELP 1,000 BUSINESS OWNERS IN NIGERIA APPLY FOR THE TONY ELUMELU FOUNDATION GRANT",
   offers: [
     {
       id: "o1",

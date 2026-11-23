@@ -1,18 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CTA_LABEL, CTA_TRACK_ID, SIGNUP_HREF } from "@/lib/landing";
-import { useTrack } from "./useTrack";
+import { CTA_LABEL, CTA_TRACK_ID } from "@/lib/landing";
+import { Cta } from "./Cta";
 
 /*
   Sticky mobile bottom CTA (PRD 5.1): the bar appears ONLY after the hero has
   scrolled out of view, keeping the hero CTA-free. It slides in once per page
   load; on desktop it stays hidden because the primary CTAs are already in
-  the flow.
+  the flow. The button itself is the shared <Cta>, so it behaves exactly like
+  every other CTA: tracked, and it simply goes to the signup page.
 */
 export function StickyCta() {
   const [visible, setVisible] = useState(false);
-  const track = useTrack();
 
   useEffect(() => {
     const hero = document.getElementById("hero");
@@ -32,13 +32,9 @@ export function StickyCta() {
       role="complementary"
       aria-label="Quick sign up"
     >
-      <a
-        href={SIGNUP_HREF}
-        className="cta-btn cta-btn-primary sticky-cta-btn"
-        onClick={() => track(CTA_TRACK_ID.sticky, { source: "sticky-bar" })}
-      >
+      <Cta variant="primary" trackId={CTA_TRACK_ID.sticky} full>
         {CTA_LABEL}
-      </a>
+      </Cta>
     </div>
   );
 }

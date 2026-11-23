@@ -134,12 +134,12 @@ export default function HomePage() {
               <Image
                 src="/brand/ceo.jpg"
                 alt={`${CEO.name}, ${CEO.title}`}
-                width={336}
-                height={420}
-                sizes="(min-width: 640px) 180px, 96px"
+                width={480}
+                height={600}
+                sizes="(min-width: 640px) 240px, 200px"
               />
             </div>
-            <div>
+            <div className="ceo-text">
               <p className="ceo-name">{CEO.name}</p>
               <p className="ceo-title">{CEO.title}</p>
               <div className="ceo-bio">
@@ -166,7 +166,12 @@ export default function HomePage() {
           <p className="kicker">Who we are</p>
           <h2>About Icreatit Brand Limited</h2>
           <p className="about-lead">{ABOUT.lead}</p>
-          <p className="section-note">{ABOUT.body}</p>
+          {ABOUT.body.map((paragraph) => (
+            <p className="section-note" key={paragraph.slice(0, 24)}>
+              {paragraph}
+            </p>
+          ))}
+          <p className="about-focus">{ABOUT.focus}</p>
           <div className="offer-grid">
             {ABOUT.offers.map((o, i) => (
               <Reveal className="offer-card" key={o.id} delay={i * 80}>
