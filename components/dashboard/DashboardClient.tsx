@@ -305,6 +305,14 @@ export function DashboardClient() {
           <Reveal>
             <ReferralsList referrals={data.referrals} />
           </Reveal>
+
+          <Reveal>
+            <section className="dash-block dash-center" aria-label="Telegram group">
+              <p className="dash-note dash-note-strong">
+                For more trainings and sessions, join the Telegram group by clicking the button below
+              </p>
+            </section>
+          </Reveal>
         </div>
 
       <footer className="dash-footer">
@@ -356,7 +364,12 @@ export function DashboardClient() {
 function WelcomeHeader({ data }: { data: DashboardData }) {
   return (
     <header className="dash-hero">
-      <h1 className="dash-welcome">Welcome, {data.firstName}</h1>
+      <div>
+        <h1 className="dash-welcome">Welcome, {data.firstName}</h1>
+        <p className="dash-subtitle">
+          To unlock the training modules, refer one person and send a message to the CEO
+        </p>
+      </div>
     </header>
   );
 }
@@ -391,20 +404,16 @@ function ReferralCard(props: { referralLink: string; onToast: (t: string) => voi
 function WhatsappStep(props: { data: DashboardData; clickWhatsapp: () => void }) {
   const { data } = props;
   return (
-    <section className="dash-block" aria-label="Message the CEO">
-      <div className="dash-row dash-row-first">
-        <div>
-          <h2 className="dash-label">Message the CEO</h2>
-          <p className="dash-note">Send it once to unlock the videos.</p>
-        </div>
-        <button
-          type="button"
-          onClick={props.clickWhatsapp}
-          className={`chip-btn ${data.whatsappClicked ? "chip-btn-ghost" : ""}`}
-        >
-          {data.whatsappClicked ? "Sent" : "Send WhatsApp message"}
-        </button>
-      </div>
+    <section className="dash-block dash-center" aria-label="Message the CEO">
+      <h2 className="dash-label dash-label-center">Message the CEO</h2>
+      <p className="dash-note">Send it once to unlock the videos.</p>
+      <button
+        type="button"
+        onClick={props.clickWhatsapp}
+        className={`chip-btn dash-center-btn ${data.whatsappClicked ? "chip-btn-ghost" : ""}`}
+      >
+        {data.whatsappClicked ? "Sent" : "Send WhatsApp message"}
+      </button>
     </section>
   );
 }
@@ -452,7 +461,7 @@ function VideoModule(props: {
               <path d="M8 11V8a4 4 0 0 1 8 0v3" />
             </svg>
           </span>
-          <p>Message the CEO and refer 1 friend</p>
+          <p>Coming Soon</p>
         </div>
       </div>
       <div className="video-module-head">
