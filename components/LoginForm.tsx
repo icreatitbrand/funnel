@@ -5,15 +5,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { getDeviceToken } from "@/lib/deviceToken";
 import { isValidEmail } from "@/lib/validation";
 import type { FormEvent } from "react";
 
 /*
   Sign-in for already registered (verified) users.
-  - On a device that verified by code within the last 7 days: email only.
-  - Anywhere else (new device, or away for more than 7 days): email plus a
-    short code emailed to that address.
+  - Active within the last 7 days: email only, no code.
+  - Away for more than 7 days: email plus a short code emailed to that address.
   Unregistered emails are rejected by the auth gate (convex/authGate.ts).
 */
 export function LoginForm() {
@@ -47,18 +45,15 @@ export function LoginForm() {
     setSubmitting(true);
     setError(null);
     try {
-      // Trusted device first: no code needed if the server accepts the token.
-      const token = getDeviceToken();
-      if (token) {
-        try {
-          const result = await signIn("device", { email, token });
-          if (result.signingIn) {
-            router.push("/dashboard");
-            return;
-          }
-        } catch {
-          /* not trusted (new account on this device, or 7+ days): use a code */
+      // Email-only first: no code if the account was active in the last 7 days.
+      try {
+        const result = await signIn("email-only", { email });
+        if (result.signingIn) {
+          router.push("/dashboard");
+          return;
         }
+      } catch {
+        /* away 7+ days (or unknown email): fall through to the emailed code */
       }
       await signIn("brevo-otp", { email });
       setStage("code");

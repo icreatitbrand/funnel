@@ -1,4 +1,4 @@
-import { DeviceTrust } from "@/components/DeviceTrust";
+import { ActivityPing } from "@/components/ActivityPing";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 
 export const metadata = {
@@ -9,7 +9,7 @@ export const metadata = {
 export default function DashboardPage() {
   return (
     <>
-      <DeviceTrust />
+      <ActivityPing />
       <DashboardClient />
     </>
   );

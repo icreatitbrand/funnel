@@ -55,6 +55,8 @@ const users = defineTable({
   unsubscribeToken: v.optional(v.string()), // random token for email unsubscribe links
   unsubscribedAt: v.optional(v.number()), // set via the unsubscribe page; pauses bulk course emails
   consentAt: v.number(), // NDPA consent timestamp
+  // Last login or dashboard visit; email-only sign-in is allowed within 7 days of it.
+  lastActiveAt: v.optional(v.number()),
   role: v.union(v.literal("user"), v.literal("admin")), // ops/scripts only; no admin UI in v1
   flagged: v.boolean(),
   createdAt: v.number(),
@@ -169,9 +171,9 @@ export default defineSchema({
     deterministic unique string such as "welcome:{userId}".
   */
   /*
-    Trusted devices: a device that proved its email with a code gets a random
-    token (stored only as a SHA-256 hash). While the device was seen within
-    7 days, the same email can sign in there without a new code.
+    LEGACY / UNUSED: from the earlier trusted-device design. Nothing reads or
+    writes this table any more. Kept only so existing rows do not block a
+    schema push; safe to delete the table and this block later.
   */
   trustedDevices: defineTable({
     userId: v.id("users"),

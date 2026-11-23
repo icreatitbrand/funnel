@@ -16,6 +16,7 @@ import type * as crons from "../crons.js";
 import type * as dashboard from "../dashboard.js";
 import type * as devices from "../devices.js";
 import type * as emailActions from "../emailActions.js";
+import type * as emailLogin from "../emailLogin.js";
 import type * as emails from "../emails.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   dashboard: typeof dashboard;
   devices: typeof devices;
   emailActions: typeof emailActions;
+  emailLogin: typeof emailLogin;
   emails: typeof emails;
   files: typeof files;
   http: typeof http;

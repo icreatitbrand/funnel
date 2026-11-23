@@ -53,28 +53,25 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
     BrevoEmailOTP,
     /*
-      Trusted-device sign-in: email only, no code, but ONLY from a device that
-      earlier proved its email with a code and was seen in the last 7 days
-      (convex/devices.ts). Anything else is rejected and the client falls back
-      to the emailed code.
+      Email-only sign-in: no code while the account was active in the last
+      7 days (convex/emailLogin.ts). Otherwise it is rejected and the client
+      falls back to the emailed code.
     */
     ConvexCredentials({
-      id: "device",
+      id: "email-only",
       authorize: async (credentials, ctx) => {
         const email = credentials.email;
-        const token = credentials.token;
-        if (typeof email !== "string" || typeof token !== "string") return null;
-        const userId = await ctx.runMutation(internal.devices.consume, {
+        if (typeof email !== "string") return null;
+        const userId = (await ctx.runMutation(internal.emailLogin.consume, {
           email,
-          token,
-        });
+        })) as Id<"users"> | null;
         return userId ? { userId } : null;
       },
     }),
   ],
   session: {
     totalDurationMs: 30 * 24 * 60 * 60 * 1000, // 30 days
-    // Idle for 7 days = signed out (then a code is needed on an untrusted device).
+    // Idle for 7 days = signed out (the 7-day email-only window then also lapses).
     inactiveDurationMs: 7 * 24 * 60 * 60 * 1000,
   },
   // Short-lived access tokens: a device that was signed out by a newer login
@@ -175,6 +172,8 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       if (!user?.consentAt) {
         throw new ConvexError("Signup was not completed. Please sign up first.");
       }
+
+      await typedDb(ctx).patch(userId, { lastActiveAt: Date.now() });
 
       // One active session per account: the newest sign-in wins and any
       // session on another device is removed (the new one is created right
