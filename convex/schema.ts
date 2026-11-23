@@ -168,6 +168,20 @@ export default defineSchema({
     Brevo action runs; the action then flips the status. sendKey is a
     deterministic unique string such as "welcome:{userId}".
   */
+  /*
+    Trusted devices: a device that proved its email with a code gets a random
+    token (stored only as a SHA-256 hash). While the device was seen within
+    7 days, the same email can sign in there without a new code.
+  */
+  trustedDevices: defineTable({
+    userId: v.id("users"),
+    tokenHash: v.string(),
+    createdAt: v.number(),
+    lastSeenAt: v.number(),
+  })
+    .index("by_tokenHash", ["tokenHash"])
+    .index("by_user", ["userId"]),
+
   emailSends: defineTable({
     sendKey: v.string(),
     template: v.string(),

@@ -1,3 +1,4 @@
+import { DeviceTrust } from "@/components/DeviceTrust";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 
 export const metadata = {
@@ -6,5 +7,10 @@ export const metadata = {
 };
 
 export default function DashboardPage() {
-  return <DashboardClient />;
+  return (
+    <>
+      <DeviceTrust />
+      <DashboardClient />
+    </>
+  );
 }

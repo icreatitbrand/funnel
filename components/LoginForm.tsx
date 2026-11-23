@@ -5,13 +5,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { getDeviceToken } from "@/lib/deviceToken";
 import { isValidEmail } from "@/lib/validation";
 import type { FormEvent } from "react";
 
 /*
-  Sign-in for already registered (verified) users: email address plus a
-  short code emailed to that address only. Unregistered emails are rejected
-  by the auth gate (convex/authGate.ts), never sent a code.
+  Sign-in for already registered (verified) users.
+  - On a device that verified by code within the last 7 days: email only.
+  - Anywhere else (new device, or away for more than 7 days): email plus a
+    short code emailed to that address.
+  Unregistered emails are rejected by the auth gate (convex/authGate.ts).
 */
 export function LoginForm() {
   const { signIn } = useAuthActions();
@@ -44,6 +47,19 @@ export function LoginForm() {
     setSubmitting(true);
     setError(null);
     try {
+      // Trusted device first: no code needed if the server accepts the token.
+      const token = getDeviceToken();
+      if (token) {
+        try {
+          const result = await signIn("device", { email, token });
+          if (result.signingIn) {
+            router.push("/dashboard");
+            return;
+          }
+        } catch {
+          /* not trusted (new account on this device, or 7+ days): use a code */
+        }
+      }
       await signIn("brevo-otp", { email });
       setStage("code");
     } catch (e) {
@@ -91,8 +107,8 @@ export function LoginForm() {
         >
           <h1 className="text-2xl font-bold">Sign in</h1>
           <p className="text-sm text-ink-soft">
-            Enter the email you signed up with and we&apos;ll send you a
-            one-time sign-in code.
+            Enter the email you signed up with. We only send a code when
+            it&apos;s needed.
           </p>
           <label className="flex flex-col gap-1 text-sm font-semibold">
             Email address
@@ -108,7 +124,7 @@ export function LoginForm() {
             />
           </label>
           <button type="submit" className="btn-primary" disabled={submitting}>
-            {submitting ? "Sending code..." : "Send sign-in code"}
+            {submitting ? "Signing in..." : "Continue"}
           </button>
           <p className="text-center text-sm text-ink-soft">
             New here?{" "}
